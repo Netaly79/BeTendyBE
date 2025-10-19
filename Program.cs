@@ -1,9 +1,43 @@
+﻿
+
+using BeTendyBE.Data;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+//configurations
+var configuration = builder.Configuration;
+
+string? envUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+string? envConn = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+
+string BuildFromDatabaseUrl(string url)
+{
+    var uri = new Uri(url);
+    var userInfo = uri.UserInfo.Split(':', 2);
+    var builder = new NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.Port > 0 ? uri.Port : 5432,
+        Username = Uri.UnescapeDataString(userInfo[0]),
+        Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "",
+        Database = uri.AbsolutePath.TrimStart('/'),
+        SslMode = SslMode.Disable
+    };
+    return builder.ToString();
+}
+
+string connectionString =
+    !string.IsNullOrWhiteSpace(envConn) ? envConn :
+    !string.IsNullOrWhiteSpace(envUrl) ? BuildFromDatabaseUrl(envUrl) :
+    configuration.GetConnectionString("Default")!;
+
+    builder.Services.AddDbContext<AppDbContext>(opt =>
+        opt.UseNpgsql(connectionString));
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(o =>
@@ -17,7 +51,6 @@ builder.Services.AddCors(o =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
