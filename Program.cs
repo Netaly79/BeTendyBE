@@ -34,8 +34,9 @@ string connectionString =
     !string.IsNullOrWhiteSpace(envUrl) ? BuildFromDatabaseUrl(envUrl) :
     configuration.GetConnectionString("Default")!;
 
-    builder.Services.AddDbContext<AppDbContext>(opt =>
-        opt.UseNpgsql(connectionString));
+    builder.Services.AddDbContext<AppDbContext>(opt => opt
+        .UseNpgsql(connectionString)
+        .UseSnakeCaseNamingConvention());
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
