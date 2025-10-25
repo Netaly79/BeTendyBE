@@ -1,3 +1,4 @@
+namespace BeTendyBE.DTO;
 public sealed class LoginRequest
 {
     public string Email { get; set; } = string.Empty;

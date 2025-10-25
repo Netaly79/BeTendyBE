@@ -1,16 +1,37 @@
 ﻿namespace BeTendyBE.Domain
 {
+    public enum UserRole { Client = 0, Master = 1, Admin = 2 }
+
     public class User
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-        public string FirstName { get; set; } = default!;
-        public string LastName { get; set; } = default!;
-        public string Email { get; set; } = default!;
+
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName  { get; set; } = string.Empty;
+        public string Email     { get; set; } = string.Empty;
+
         public string? Phone { get; set; }
-        public string Role { get; set; } = "client"; // client | master | admin
+        public string? AvatarUrl { get; set; }
+
         public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+
         public string PasswordHash { get; set; } = string.Empty;
 
-        public ICollection<RefreshToken> RefreshTokens { get; } = new List<RefreshToken>();
+        public UserRole Role { get; set; } = UserRole.Client;
+
+        public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
+        public MasterProfile? MasterProfile { get; set; }
+    }
+
+    public class MasterProfile
+    {
+        public Guid UserId { get; set; }
+
+        public string? About { get; set; }
+        public string? Skills { get; set; }
+        public int? YearsExperience { get; set; }
+
+        public User User { get; set; } = default!;
     }
 }

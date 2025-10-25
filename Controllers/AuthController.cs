@@ -1,10 +1,13 @@
-using BeTendlyBE.Auth;
-using BeTendyBE.Data;
-using BeTendyBE.Domain;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+using BeTendlyBE.Services;
+using BeTendyBE.Data;
+using BeTendyBE.Domain;
+using BeTendyBE.DTO;
+
+namespace BeTendyBE.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public sealed class AuthController : ControllerBase
