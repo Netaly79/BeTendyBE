@@ -2,11 +2,13 @@
 using System.Security;
 using System.Security.Cryptography;
 using System.Text;
-using BeTendlyBE.Auth;
-using BeTendyBE.Data;
-using BeTendyBE.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using BeTendlyBE.Services;
+using BeTendyBE.Data;
+using BeTendyBE.Domain;
+
+namespace BeTendlyBE.Services;
 
 public interface IRefreshTokenService
 {

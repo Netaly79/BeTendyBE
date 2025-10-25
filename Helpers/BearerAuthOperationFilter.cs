@@ -1,8 +1,8 @@
-using System.Reflection;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
+namespace BeTendyBE.Helpers;
 public sealed class BearerAuthOperationFilter : IOperationFilter
 {
   public void Apply(OpenApiOperation operation, OperationFilterContext context)

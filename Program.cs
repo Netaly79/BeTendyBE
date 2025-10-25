@@ -1,15 +1,18 @@
 ﻿using System.Text;
-using BeTendlyBE.Auth;
-using BeTendyBE.Data;
-using BeTendyBE.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Swashbuckle.AspNetCore.Filters;
 using Npgsql;
-using Microsoft.OpenApi.Models;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
+using BeTendyBE.Helpers.Validation;
+using BeTendyBE.Helpers;
+using BeTendlyBE.Services;
+using BeTendyBE.Data;
+using BeTendyBE.Domain;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,12 +86,16 @@ builder.Services
         };
     });
 
-
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateClientProfileValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<ChangePasswordValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpsertMasterProfileValidator>();
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -124,6 +131,25 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseExceptionHandler(errApp =>
+{
+    errApp.Run(async ctx =>
+    {
+        var feature = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+        var ex = feature?.Error;
+
+        if (ex is System.Security.Authentication.AuthenticationException)
+        {
+            ctx.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await ctx.Response.WriteAsJsonAsync(new { title = ex.Message });
+            return;
+        }
+
+        ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await ctx.Response.WriteAsJsonAsync(new { title = "Unexpected error" });
+    });
+});
 
 app.UseHttpsRedirection();
 app.UseRouting();

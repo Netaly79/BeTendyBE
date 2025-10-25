@@ -1,11 +1,11 @@
 using System.Security.Claims;
 using System.Text;
-using BeTendyBE.Domain;
 using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
+using BeTendyBE.Domain;
 
-namespace BeTendlyBE.Auth
+namespace BeTendlyBE.Services
 {
 
     public sealed class JwtOptions
@@ -51,6 +51,7 @@ namespace BeTendlyBE.Auth
                 new(ClaimTypes.Email, user.Email ?? string.Empty),
                 new(ClaimTypes.GivenName, user.FirstName ?? string.Empty),
                 new(ClaimTypes.Surname, user.LastName ?? string.Empty),
+                new(ClaimTypes.Role, user.Role.ToString())
             };
 
             var expires = DateTime.UtcNow.AddMinutes(_opts.ExpiresMinutes);
