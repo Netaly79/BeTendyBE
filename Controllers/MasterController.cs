@@ -28,8 +28,8 @@ public class MasterController : ControllerBase
 
         u.Role = UserRole.Master;
 
-        if (!await _db.MasterProfiles.AnyAsync(m => m.UserId == u.Id, ct))
-            _db.MasterProfiles.Add(new MasterProfile { UserId = u.Id });
+        if (!await _db.Masters.AnyAsync(m => m.UserId == u.Id, ct))
+            _db.Masters.Add(new Master { UserId = u.Id });
 
         await _db.SaveChangesAsync(ct);
         return NoContent();
@@ -43,8 +43,8 @@ public class MasterController : ControllerBase
         if (u is null) return NotFound();
 
         u.Role = UserRole.Master;
-        if (!await _db.MasterProfiles.AnyAsync(m => m.UserId == u.Id, ct))
-            _db.MasterProfiles.Add(new MasterProfile { UserId = u.Id });
+        if (!await _db.Masters.AnyAsync(m => m.UserId == u.Id, ct))
+            _db.Masters.Add(new Master { UserId = u.Id });
 
         await _db.SaveChangesAsync(ct);
         return NoContent();

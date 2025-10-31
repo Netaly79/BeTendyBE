@@ -34,7 +34,7 @@ public sealed class ProfileController : ControllerBase
     catch { return Unauthorized(); }
 
     var user = await _db.Users
-        .Include(u => u.MasterProfile)
+        .Include(u => u.Master)
         .AsNoTracking()
         .FirstOrDefaultAsync(u => u.Id == userId, ct);
 
@@ -58,7 +58,7 @@ public sealed class ProfileController : ControllerBase
 
     await _db.SaveChangesAsync(ct);
 
-    await _db.Entry(u).Reference(x => x.MasterProfile).LoadAsync(ct);
+    await _db.Entry(u).Reference(x => x.Master).LoadAsync(ct);
 
     return Ok(ClientProfileMapping.ToDto(u));
   }

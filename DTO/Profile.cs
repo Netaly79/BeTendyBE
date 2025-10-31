@@ -18,22 +18,23 @@ public record UpdateClientProfileRequest(string FirstName, string LastName, stri
 public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 
 // master DTO block
-public record MasterProfileResponse(string? About, string? Skills, int? YearsExperience);
-public record UpsertMasterProfileRequest(string? About, string? Skills, int? YearsExperience);
+public record MasterProfileResponse(string? About, string? Skills, int? YearsExperience, string? Address = null);
+public record UpsertMasterProfileRequest(string? About, string? Skills, int? ExperienceYears, string? Address = null);
 
 
 public static class ClientProfileMapping
 {
     public static ProfileResponse ToDto(User u)
     {
-        var masterBlock = u.Role == UserRole.Master && u.MasterProfile is not null
+        var masterBlock = u.Role == UserRole.Master && u.Master is not null
             ? new MasterProfileResponse(
-                u.MasterProfile.About,
-                u.MasterProfile.Skills,
-                u.MasterProfile.YearsExperience
+                u.Master.About,
+                u.Master.Skills,
+                u.Master.ExperienceYears,
+                u.Master.Address
               )
             : null;
-
+    
         return new ProfileResponse(
             Id: u.Id,
             Email: u.Email,
