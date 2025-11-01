@@ -27,7 +27,7 @@ namespace BeTendlyBE.Services
     public async Task<User> GetMeAsync(Guid userId, CancellationToken ct)
     {
       return await _db.Users
-          .Include(u => u.MasterProfile)
+          .Include(u => u.Master)
           .AsNoTracking()
           .FirstOrDefaultAsync(u => u.Id == userId, ct)
           ?? throw new KeyNotFoundException("User not found");

@@ -7,7 +7,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
-    public DbSet<MasterProfile> MasterProfiles => Set<MasterProfile>();
+    public DbSet<Master> Masters => Set<Master>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -57,8 +57,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // ----- MasterProfile (1–1 к User, PK = FK) -----
-        b.Entity<MasterProfile>(e =>
+        // ----- Master (1–1 к User, PK = FK) -----
+        b.Entity<Master>(e =>
         {
             e.HasKey(x => x.UserId);
 
@@ -66,8 +66,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(x => x.Skills).HasMaxLength(300);
 
             e.HasOne(x => x.User)
-             .WithOne(u => u.MasterProfile)
-             .HasForeignKey<MasterProfile>(x => x.UserId)
+             .WithOne(u => u.Master)
+             .HasForeignKey<Master>(x => x.UserId)
              .OnDelete(DeleteBehavior.Cascade);
         });
     }

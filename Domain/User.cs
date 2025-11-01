@@ -7,8 +7,8 @@
         public Guid Id { get; set; } = Guid.NewGuid();
 
         public string FirstName { get; set; } = string.Empty;
-        public string LastName  { get; set; } = string.Empty;
-        public string Email     { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
 
         public string? Phone { get; set; }
         public string? AvatarUrl { get; set; }
@@ -21,16 +21,21 @@
 
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
-        public MasterProfile? MasterProfile { get; set; }
+        public Master? Master { get; set; }
     }
 
-    public class MasterProfile
+    public class Master
     {
-        public Guid UserId { get; set; }
+        public Guid Id { get; set; }                   
+        public Guid UserId { get; set; }               
 
         public string? About { get; set; }
         public string? Skills { get; set; }
-        public int? YearsExperience { get; set; }
+        public int? ExperienceYears { get; set; }
+        public string? Address { get; set; }
+
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime UpdatedAtUtc { get; set; }
 
         public User User { get; set; } = default!;
     }

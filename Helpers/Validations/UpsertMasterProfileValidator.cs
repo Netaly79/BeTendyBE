@@ -8,8 +8,8 @@ public sealed class UpsertMasterProfileValidator : AbstractValidator<UpsertMaste
     {
         RuleFor(x => x.About).MaximumLength(500);
         RuleFor(x => x.Skills).MaximumLength(300);
-        RuleFor(x => x.YearsExperience)
+        RuleFor(x => x.ExperienceYears)
             .InclusiveBetween(0, 60)
-            .When(x => x.YearsExperience.HasValue);
+            .When(x => x.ExperienceYears.HasValue);
     }
 }
