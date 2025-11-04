@@ -15,15 +15,19 @@ using BeTendyBE.Data;
 using BeTendyBE.Domain;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Builder;
 
 var builder = WebApplication.CreateBuilder(args);
 
 //configurations
 var configuration = builder.Configuration;
 
-string? envConn = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");           // если задашь это в App Service → Configuration
-string? azureConn = Environment.GetEnvironmentVariable("CUSTOMCONNSTR_DefaultConnection"); // если будешь использовать "Connection strings" (Type: Custom)
-string? envUrl = Environment.GetEnvironmentVariable("DATABASE_URL");                   // формат postgres://user:pass@host:port/db
+string? envConn1 = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+string? envConn2 = Environment.GetEnvironmentVariable("POSTGRESQLCONNSTR_DefaultConnection"); // <-- для Type=PostgreSQL
+string? envConn3 = Environment.GetEnvironmentVariable("CUSTOMCONNSTR_DefaultConnection");     // если вдруг поменяешь Type на Custom
+string? envUrl   = Environment.GetEnvironmentVariable("DATABASE_URL");               // формат postgres://user:pass@host:port/db
 
 
 string BuildFromDatabaseUrl(string url)
@@ -43,18 +47,17 @@ string BuildFromDatabaseUrl(string url)
 }
 
 string connectionString =
-    !string.IsNullOrWhiteSpace(envConn) ? envConn :
-    !string.IsNullOrWhiteSpace(azureConn) ? azureConn :
-    !string.IsNullOrWhiteSpace(envUrl) ? BuildFromDatabaseUrl(envUrl) :
-    configuration.GetConnectionString("DefaultConnection")!;
+    FirstNonEmpty(envConn1, envConn2, envConn3)
+    ?? (!string.IsNullOrWhiteSpace(envUrl) ? BuildFromDatabaseUrl(envUrl) : null)
+    ?? configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("DefaultConnection is missing.");
 
-var csb = new NpgsqlConnectionStringBuilder(connectionString);
-#pragma warning disable CS8602
-if (csb.Host.EndsWith(".postgres.database.azure.com", StringComparison.OrdinalIgnoreCase))
+var csb = new Npgsql.NpgsqlConnectionStringBuilder(connectionString);
+if (!string.IsNullOrEmpty(csb.Host) &&
+    csb.Host.EndsWith(".postgres.database.azure.com", StringComparison.OrdinalIgnoreCase))
 {
-  csb.SslMode = SslMode.Require;
+    csb.SslMode = Npgsql.SslMode.Require; // TrustServerCertificate=true — только если реально нужна
 }
-#pragma warning restore CS8602
 connectionString = csb.ToString();
 builder.Services.AddDbContext<AppDbContext>(opt => opt
     .UseNpgsql(connectionString)
@@ -156,16 +159,32 @@ builder.Services.AddProblemDetails(options =>
 
 var app = builder.Build();
 
+var fwd = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+fwd.KnownNetworks.Clear();
+fwd.KnownProxies.Clear();
+app.UseForwardedHeaders(fwd);
+
+// Health и корень (возвращают 200, не 404)
+app.MapGet("/healthz", () => Results.Ok("OK"));
+app.MapGet("/", () => Results.Ok("BeTendly API is running"));
+
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
+  var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+  await db.Database.MigrateAsync();
 }
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+  app.UseSwagger();
+  app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "BeTendly API v1");
+        c.RoutePrefix = "docs";
+    });
 }
 
 
@@ -200,3 +219,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+
+static string? FirstNonEmpty(params string?[] vals)
+    => vals.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
