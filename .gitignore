@@ -368,3 +368,6 @@ FodyWeavers.xsd
 # local settings (not for git)
 appsettings.*.json
 !appsettings.json
+
+# Deployment packages
+*.zip
