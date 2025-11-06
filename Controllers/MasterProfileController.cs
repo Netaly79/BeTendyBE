@@ -12,11 +12,11 @@ namespace BeTendyBE.Controllers;
 
 /// <summary>
 ///Операції з профілем майстра (створення/оновлення та отримання).
-// Потребує ролі <c>Master</c>.
-// </summary>
+/// Потребує ролі <c>Master</c>.
+/// </summary>
 [ApiController]
 [Route("api/master/profile")]
-[Authorize(Roles = "Master")]
+[Authorize]
 [Produces("application/json")]
 public sealed class MasterProfileController : ControllerBase
 {
@@ -39,8 +39,8 @@ public sealed class MasterProfileController : ControllerBase
     {
         var userId = User.GetUserId();
 
-        var role = await _db.Users.Where(u => u.Id == userId).Select(u => u.Role).FirstOrDefaultAsync(ct);
-        if (role != UserRole.Master) return Forbid();
+        var user = await _db.Users.Where(u => u.Id == userId).FirstOrDefaultAsync(ct);
+        if (user is null || !user.IsMaster) return Forbid();
 
         var mp = await _db.Masters.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == userId, ct);
         var resp = mp is null
@@ -69,7 +69,7 @@ public sealed class MasterProfileController : ControllerBase
 
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
         if (user is null) return NotFound();
-        if (user.Role != UserRole.Master) return Forbid();
+        if (!user.IsMaster) return Forbid();
 
         var about = string.IsNullOrWhiteSpace(req.About) ? null : req.About.Trim();
         var skills = string.IsNullOrWhiteSpace(req.Skills) ? null : req.Skills.Trim();

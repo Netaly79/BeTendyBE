@@ -109,6 +109,7 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<UpdateClientProfileValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<ChangePasswordValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpsertMasterProfileValidator>();
+builder.Services.AddScoped<IMasterService, MasterService>();
 
 builder.Services.AddSwaggerGen(c =>
 {

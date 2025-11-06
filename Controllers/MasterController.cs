@@ -15,7 +15,14 @@ namespace BeTendyBE.Controllers;
 public class MasterController : ControllerBase
 {
     private readonly AppDbContext _db;
-    public MasterController(AppDbContext db) => _db = db;
+    private readonly IMasterService _masterSvc;
+
+    public MasterController(AppDbContext db, IMasterService masterSvc)
+    {
+        _db = db;
+        _masterSvc = masterSvc;
+    }
+
 
     /// <summary>
     /// Підвищити роль поточного користувача до Master (ідемпотентно).
@@ -38,20 +45,7 @@ public class MasterController : ControllerBase
     public async Task<IActionResult> Upgrade(CancellationToken ct)
     {
         var userId = ClaimsPrincipalExt.GetUserId(User);
-
-        var u = await _db.Users.FirstOrDefaultAsync(x => x.Id == userId, ct);
-        if (u is null) return NotFound();
-
-        if (u.Role != UserRole.Master)
-        {
-            u.Role = UserRole.Master;
-
-            if (!await _db.Masters.AnyAsync(m => m.UserId == u.Id, ct))
-                _db.Masters.Add(new Master { UserId = u.Id });
-
-            await _db.SaveChangesAsync(ct);
-        }
-
+        await _masterSvc.EnsureMasterAsync(userId, ct);
         return NoContent();
     }
 
@@ -80,9 +74,9 @@ public class MasterController : ControllerBase
         var u = await _db.Users.FirstOrDefaultAsync(x => x.Id == userId, ct);
         if (u is null) return NotFound();
 
-        if (u.Role != UserRole.Master)
+        if (!u.IsMaster)
         {
-            u.Role = UserRole.Master;
+            u.IsMaster = true;
 
             if (!await _db.Masters.AnyAsync(m => m.UserId == u.Id, ct))
                 _db.Masters.Add(new Master { UserId = u.Id });
