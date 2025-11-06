@@ -31,9 +31,11 @@ public sealed class GlobalProblemDetailsExamplesFilter : IOperationFilter
     private static bool TryGetMedia(OpenApiResponse response, out OpenApiMediaType media)
     {
         // покрываем оба варианта контента
+#pragma warning disable CS8601 // Possible null reference assignment.
         if (response.Content.TryGetValue("application/problem+json", out media)) return true;
-        if (response.Content.TryGetValue("application/json", out media)) return true;
-        media = null!;
+    if (response.Content.TryGetValue("application/json", out media)) return true;
+#pragma warning restore CS8601 // Possible null reference assignment.
+    media = null!;
         return false;
     }
 
@@ -47,17 +49,17 @@ public sealed class GlobalProblemDetailsExamplesFilter : IOperationFilter
             Title = code switch
             {
                 StatusCodes.Status401Unauthorized => "Unauthorized",
-                StatusCodes.Status403Forbidden    => "Forbidden",
-                StatusCodes.Status404NotFound     => "Not Found",
-                _                                  => "Error"
+                StatusCodes.Status403Forbidden => "Forbidden",
+                StatusCodes.Status404NotFound => "Not Found",
+                _ => "Error"
             },
             Status = code,
             Detail = code switch
             {
                 StatusCodes.Status401Unauthorized => "Missing or invalid access token.",
-                StatusCodes.Status403Forbidden    => "You do not have permission to access this resource.",
-                StatusCodes.Status404NotFound     => "Resource was not found.",
-                _                                  => "An error occurred."
+                StatusCodes.Status403Forbidden => "You do not have permission to access this resource.",
+                StatusCodes.Status404NotFound => "Resource was not found.",
+                _ => "An error occurred."
             },
             Instance = "/api/master/profile"
         };
@@ -69,7 +71,7 @@ public sealed class GlobalProblemDetailsExamplesFilter : IOperationFilter
     {
         var example = new ValidationProblemDetails(new Dictionary<string, string[]>
         {
-            ["name"]  = new[] { "The name field is required." },
+            ["name"] = new[] { "The name field is required." },
             ["phone"] = new[] { "Invalid phone number format." }
         })
         {

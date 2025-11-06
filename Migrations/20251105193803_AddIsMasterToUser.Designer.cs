@@ -3,6 +3,7 @@ using System;
 using BeTendyBE.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BeTendyBE.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251105193803_AddIsMasterToUser")]
+    partial class AddIsMasterToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,10 +27,9 @@ namespace BeTendyBE.Migrations
 
             modelBuilder.Entity("BeTendyBE.Domain.Master", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
-                        .HasColumnName("id");
+                        .HasColumnName("user_id");
 
                     b.Property<string>("About")
                         .HasMaxLength(500)
@@ -46,6 +48,10 @@ namespace BeTendyBE.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("experience_years");
 
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
                     b.Property<string>("Skills")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)")
@@ -55,16 +61,8 @@ namespace BeTendyBE.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at_utc");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
+                    b.HasKey("UserId")
                         .HasName("pk_master");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_master_user_id");
 
                     b.ToTable("master", (string)null);
                 });

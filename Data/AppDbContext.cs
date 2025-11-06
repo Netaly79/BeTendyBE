@@ -26,14 +26,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(x => x.Phone).HasMaxLength(32);
             e.Property(x => x.AvatarUrl).HasMaxLength(512);
 
-            e.Property(x => x.Role)
-             .HasConversion<string>()
-             .HasMaxLength(16)
+            e.Property(x => x.IsMaster)
+             .HasConversion<bool>()
              .IsRequired();
 
             e.Property(x => x.CreatedAtUtc).IsRequired();
 
-            e.HasIndex(x => x.Role);
+            e.HasIndex(x => x.IsMaster);
             e.HasIndex(x => x.CreatedAtUtc);
 
             e.HasMany(x => x.RefreshTokens)
@@ -60,15 +59,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // ----- Master (1–1 к User, PK = FK) -----
         b.Entity<Master>(e =>
         {
-            e.HasKey(x => x.UserId);
-
+            e.HasKey(x => x.Id);                       // PK = Id
+            e.HasIndex(x => x.UserId).IsUnique();      // 1:1 гарантия
             e.Property(x => x.About).HasMaxLength(500);
             e.Property(x => x.Skills).HasMaxLength(300);
 
             e.HasOne(x => x.User)
-             .WithOne(u => u.Master)
-             .HasForeignKey<Master>(x => x.UserId)
-             .OnDelete(DeleteBehavior.Cascade);
+            .WithOne(u => u.Master)
+            .HasForeignKey<Master>(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

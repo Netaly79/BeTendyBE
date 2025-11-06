@@ -51,7 +51,7 @@ namespace BeTendlyBE.Services
                 new(ClaimTypes.Email, user.Email ?? string.Empty),
                 new(ClaimTypes.GivenName, user.FirstName ?? string.Empty),
                 new(ClaimTypes.Surname, user.LastName ?? string.Empty),
-                new(ClaimTypes.Role, user.Role.ToString())
+                new(ClaimTypes.Role, user.IsMaster ? "Master" : "Client")
             };
 
             var expires = DateTime.UtcNow.AddMinutes(_opts.ExpiresMinutes);

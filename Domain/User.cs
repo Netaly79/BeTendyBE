@@ -1,6 +1,5 @@
 ﻿namespace BeTendyBE.Domain
 {
-    public enum UserRole { Client = 0, Master = 1, Admin = 2 }
 
     public class User
     {
@@ -17,8 +16,8 @@
 
         public string PasswordHash { get; set; } = string.Empty;
 
-        public UserRole Role { get; set; } = UserRole.Client;
-
+        public bool IsMaster { get; set; } = false;
+ 
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
         public Master? Master { get; set; }

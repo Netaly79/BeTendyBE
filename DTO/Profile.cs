@@ -9,7 +9,7 @@ public record ProfileResponse(
     string LastName,
     string Phone = "",
     string? AvatarUrl = null,
-    UserRole Role = UserRole.Client,
+    bool IsMaster = false,
     MasterProfileResponse? Master = null // добавлено: блок мастерского профиля
 );
 
@@ -26,7 +26,7 @@ public static class ClientProfileMapping
 {
     public static ProfileResponse ToDto(User u)
     {
-        var masterBlock = u.Role == UserRole.Master && u.Master is not null
+        var masterBlock = u.IsMaster && u.Master is not null
             ? new MasterProfileResponse(
                 u.Master.About,
                 u.Master.Skills,
@@ -42,7 +42,7 @@ public static class ClientProfileMapping
             LastName: u.LastName,
             Phone: u.Phone ?? "",
             AvatarUrl: u.AvatarUrl,
-            Role: u.Role,
+            IsMaster: u.IsMaster,
             Master: masterBlock
         );
     }
