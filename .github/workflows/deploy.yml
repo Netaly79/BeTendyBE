@@ -2,7 +2,7 @@ name: Deploy BeTendly API to Azure App Service
 
 on:
   push:
-    branches: [ "main" ]   # автодеплой при пуше в main
+    branches: [ "master" ]   # автодеплой при пуше в main
 
 env:
   AZURE_WEBAPP_NAME: betendly-api
