@@ -1,36 +1,33 @@
-name: Deploy BeTendly API to Azure App Service
+name: Deploy BeTendyBE API to Azure App Service
 
 on:
   push:
-    branches: [ "master" ]   # автодеплой при пуше в main
+    branches: [ "master" ]
 
 env:
   AZURE_WEBAPP_NAME: betendly-api
-  PACKAGE_PATH: .          # шлём исходники, Oryx соберёт на Azure
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # (опционально) Быстрая проверка сборки .NET локально — можно удалить,
-      # если полагаешься только на Oryx.
-      - name: Setup .NET 8 (optional local build check)
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-      - name: Dotnet restore (optional)
-        run: dotnet restore
-      - name: Dotnet build (optional)
-        run: dotnet build -c Release --no-restore
 
-      # Пакуем исходники. ZipDeploy + SCM_DO_BUILD_DURING_DEPLOYMENT=true => Oryx соберёт на стороне Azure
-      - name: Zip source
-        run: |
-          zip -r app.zip $PACKAGE_PATH -x ".git/*" ".github/*" "bin/*" "obj/*"
+      - name: Restore
+        run: dotnet restore BeTendyBE/BeTendyBE.csproj
+
+      - name: Publish (Release)
+        run: dotnet publish BeTendyBE/BeTendyBE.csproj -c Release -o output
+
+      - name: Zip package
+        run: cd output && zip -r ../app.zip .
 
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v3
