@@ -12,14 +12,30 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show repo root (debug)
+        run: |
+          pwd
+          ls -la
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-      - run: dotnet restore BeTendyBE/BeTendyBE.csproj
-      - run: dotnet publish BeTendyBE/BeTendyBE.csproj -c Release -o output
-      - run: cd output && zip -r ../app.zip .
-      - uses: azure/webapps-deploy@v3
+
+      - name: Restore
+        run: dotnet restore ./BeTendyBE.csproj
+
+      - name: Publish (Release)
+        run: dotnet publish ./BeTendyBE.csproj -c Release -o output
+
+      - name: Zip package
+        run: cd output && zip -r ../app.zip .
+
+      - name: Deploy to Azure WebApp
+        uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
