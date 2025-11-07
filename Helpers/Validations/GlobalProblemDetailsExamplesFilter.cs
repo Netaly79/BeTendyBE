@@ -11,7 +11,6 @@ public sealed class GlobalProblemDetailsExamplesFilter : IOperationFilter
     {
         foreach (var (statusCode, response) in operation.Responses)
         {
-            // ищем ответы, у которых схема = ProblemDetails или ValidationProblemDetails
             if (!TryGetMedia(response, out var media)) continue;
 
             var schemaRef = media.Schema?.Reference?.Id;
@@ -30,12 +29,11 @@ public sealed class GlobalProblemDetailsExamplesFilter : IOperationFilter
 
     private static bool TryGetMedia(OpenApiResponse response, out OpenApiMediaType media)
     {
-        // покрываем оба варианта контента
 #pragma warning disable CS8601 // Possible null reference assignment.
         if (response.Content.TryGetValue("application/problem+json", out media)) return true;
-    if (response.Content.TryGetValue("application/json", out media)) return true;
+        if (response.Content.TryGetValue("application/json", out media)) return true;
 #pragma warning restore CS8601 // Possible null reference assignment.
-    media = null!;
+        media = null!;
         return false;
     }
 
@@ -84,4 +82,6 @@ public sealed class GlobalProblemDetailsExamplesFilter : IOperationFilter
 
         return new OpenApiString(JsonSerializer.Serialize(example));
     }
+
+
 }

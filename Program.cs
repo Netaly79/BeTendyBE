@@ -16,8 +16,7 @@ using BeTendyBE.Domain;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Builder;
+using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +26,7 @@ var configuration = builder.Configuration;
 string? envConn1 = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
 string? envConn2 = Environment.GetEnvironmentVariable("POSTGRESQLCONNSTR_DefaultConnection"); // <-- для Type=PostgreSQL
 string? envConn3 = Environment.GetEnvironmentVariable("CUSTOMCONNSTR_DefaultConnection");     // если вдруг поменяешь Type на Custom
-string? envUrl   = Environment.GetEnvironmentVariable("DATABASE_URL");               // формат postgres://user:pass@host:port/db
+string? envUrl = Environment.GetEnvironmentVariable("DATABASE_URL");               // формат postgres://user:pass@host:port/db
 
 
 string BuildFromDatabaseUrl(string url)
@@ -56,7 +55,7 @@ var csb = new Npgsql.NpgsqlConnectionStringBuilder(connectionString);
 if (!string.IsNullOrEmpty(csb.Host) &&
     csb.Host.EndsWith(".postgres.database.azure.com", StringComparison.OrdinalIgnoreCase))
 {
-    csb.SslMode = Npgsql.SslMode.Require; // TrustServerCertificate=true — только если реально нужна
+  csb.SslMode = Npgsql.SslMode.Require;
 }
 connectionString = csb.ToString();
 builder.Services.AddDbContext<AppDbContext>(opt => opt
@@ -118,6 +117,7 @@ builder.Services.AddSwaggerGen(c =>
 {
   c.SwaggerDoc("v1", new OpenApiInfo { Title = "BeTendlyBE API", Version = "v1" });
   c.OperationFilter<GlobalProblemDetailsExamplesFilter>();
+  c.ExampleFilters();
 
   var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
   var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
@@ -137,8 +137,7 @@ builder.Services.AddSwaggerGen(c =>
   c.OperationFilter<BearerAuthOperationFilter>();
 });
 
-
-
+builder.Services.AddSwaggerExamplesFromAssemblyOf<Program>();
 
 builder.Services.AddCors(o =>
 {
@@ -162,7 +161,7 @@ var app = builder.Build();
 
 var fwd = new ForwardedHeadersOptions
 {
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+  ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 };
 fwd.KnownNetworks.Clear();
 fwd.KnownProxies.Clear();
@@ -183,8 +182,8 @@ if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
   app.UseSwagger();
   app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "BeTendly API v1");
-        c.RoutePrefix = "docs";
+      c.SwaggerEndpoint("/swagger/v1/swagger.json", "BeTendly API v1");
+      c.RoutePrefix = "docs";
     });
 }
 

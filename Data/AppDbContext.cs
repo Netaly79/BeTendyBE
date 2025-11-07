@@ -9,6 +9,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Master> Masters => Set<Master>();
 
+    public DbSet<Service> Services => Set<Service>();
+
     protected override void OnModelCreating(ModelBuilder b)
     {
         // ----- User -----
@@ -67,6 +69,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasOne(x => x.User)
             .WithOne(u => u.Master)
             .HasForeignKey<Master>(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ---- Services -----
+        b.Entity<Service>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Name).IsRequired().HasMaxLength(100);
+            e.Property(s => s.Price).HasColumnType("decimal(10,2)").IsRequired();
+            e.Property(s => s.DurationMinutes).IsRequired();
+            e.Property(s => s.Description).HasColumnType("text");
+
+            e.HasOne(s => s.Master)
+            .WithMany()
+            .HasForeignKey(s => s.MasterId)
             .OnDelete(DeleteBehavior.Cascade);
         });
     }
