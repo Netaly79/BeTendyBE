@@ -72,7 +72,12 @@ public sealed class MasterProfileController : ControllerBase
         if (!user.IsMaster) return Forbid();
 
         var about = string.IsNullOrWhiteSpace(req.About) ? null : req.About.Trim();
-        var skills = string.IsNullOrWhiteSpace(req.Skills) ? null : req.Skills.Trim();
+        var skills = (req.Skills == null || req.Skills.Count == 0)
+            ? null
+            : req.Skills
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s.Trim())
+                .ToList();
 
         var mp = await _db.Masters.FirstOrDefaultAsync(x => x.UserId == userId, ct);
         if (mp is null)
@@ -82,7 +87,7 @@ public sealed class MasterProfileController : ControllerBase
         }
 
         mp.About = about;
-        mp.Skills = skills;
+        mp.Skills = skills ?? new List<string>();
         mp.ExperienceYears = req.ExperienceYears;
         mp.Address = string.IsNullOrWhiteSpace(req.Address) ? null : req.Address.Trim();
 

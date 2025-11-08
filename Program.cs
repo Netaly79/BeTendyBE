@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Swashbuckle.AspNetCore.Filters;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -156,6 +157,10 @@ builder.Services.AddProblemDetails(options =>
              ctx.ProblemDetails.Extensions["traceId"] = ctx.HttpContext.TraceIdentifier;
            };
 });
+
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase);
+
 
 var app = builder.Build();
 

@@ -29,7 +29,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(x => x.AvatarUrl).HasMaxLength(512);
 
             e.Property(x => x.IsMaster)
-             .HasConversion<bool>()
              .IsRequired();
 
             e.Property(x => x.CreatedAtUtc).IsRequired();
@@ -63,8 +62,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             e.HasKey(x => x.Id);                       // PK = Id
             e.HasIndex(x => x.UserId).IsUnique();      // 1:1 гарантия
-            e.Property(x => x.About).HasMaxLength(500);
-            e.Property(x => x.Skills).HasMaxLength(300);
+            e.Property(x => x.About).HasMaxLength(300);
+            e.Property(x => x.Address).HasMaxLength(300);
+            e.Property(x => x.Skills)
+                .HasColumnType("text[]")
+                .HasDefaultValueSql("'{}'::text[]") // пустой массив
+                .IsRequired();
+            e.Property(x => x.CreatedAtUtc).HasColumnType("timestamptz").IsRequired();
+            e.Property(x => x.UpdatedAtUtc).HasColumnType("timestamptz").IsRequired();
 
             e.HasOne(x => x.User)
             .WithOne(u => u.Master)
@@ -82,7 +87,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(s => s.Description).HasColumnType("text");
 
             e.HasOne(s => s.Master)
-            .WithMany()
+            .WithMany(m => m.Services)
             .HasForeignKey(s => s.MasterId)
             .OnDelete(DeleteBehavior.Cascade);
         });
