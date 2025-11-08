@@ -1,4 +1,6 @@
-﻿namespace BeTendyBE.Domain
+﻿using System.Text.Json.Serialization;
+
+namespace BeTendyBE.Domain
 {
 
     public class User
@@ -29,13 +31,19 @@
         public Guid UserId { get; set; }               
 
         public string? About { get; set; }
-        public string? Skills { get; set; }
+        public List<string> Skills { get; set; } = new();
         public int? ExperienceYears { get; set; }
         public string? Address { get; set; }
 
-        public DateTime CreatedAtUtc { get; set; }
-        public DateTime UpdatedAtUtc { get; set; }
+        // public double? Rating { get; set; }
+        // public int ReviewsCount { get; set; }
 
+        public DateTimeOffset CreatedAtUtc { get; set; }
+        public DateTimeOffset UpdatedAtUtc { get; set; }
+
+        public ICollection<Service> Services { get; set; } = new List<Service>();
+
+        [JsonIgnore]
         public User User { get; set; } = default!;
     }
 }

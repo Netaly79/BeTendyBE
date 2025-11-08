@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Authentication;
 
 using BeTendyBE.Contracts;
 using BeTendyBE.Data;
@@ -13,13 +12,14 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace BeTendyBE.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("member")]
 [Authorize]
 [Produces("application/json")]
 public sealed class ProfileController : ControllerBase
 {
   private readonly AppDbContext _db;
   private readonly IPasswordHasher<User> _hasher;
+
 
   public ProfileController(AppDbContext db, IPasswordHasher<User> hasher)
   {
@@ -31,25 +31,78 @@ public sealed class ProfileController : ControllerBase
   /// <response code="200">Успішно. Повернуто актуальні дані профілю.</response>
   /// <response code="401">Неавторизовано: відсутній або недійсний токен.</response>
   /// <response code="404">Користувача не знайдено.</response>
-  [HttpGet("me")]
-  [SwaggerOperation(Summary = "Отримати мій профіль", Description = "Повертає профіль поточного користувача.")]
+  [HttpGet("{id:guid?}")]
+  [SwaggerOperation(Summary = "Отримати профіль",
+    Description = "Без параметра повертає мій профіль. З параметром id — профіль користувача за ідентифікатором.")]
   [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-  public async Task<ActionResult<ProfileResponse>> Me(CancellationToken ct)
+  public async Task<ActionResult<ProfileResponse>> Me(Guid? id, CancellationToken ct)
   {
-    Guid userId;
-    try { userId = User.GetUserId(); }
+
+    Guid currentUserId;
+    try { currentUserId = User.GetUserId(); }
     catch { return Unauthorized(); }
 
-    var user = await _db.Users
-        .Include(u => u.Master)
-        .AsNoTracking()
-        .FirstOrDefaultAsync(u => u.Id == userId, ct);
+    var targetUserId = id ?? currentUserId;
+    var baseDto = await _db.Users
+    .AsNoTracking()
+    .Where(u => u.Id == targetUserId /* && !u.IsDeleted && !u.IsBanned */)
+    .Select(u => new
+    {
+      Dto = new ProfileResponse(
+            u.Id,
+            (u.Email ?? string.Empty).Trim(),
+            (u.FirstName ?? string.Empty).Trim(),
+            (u.LastName ?? string.Empty).Trim(),
+            (u.Phone ?? string.Empty).Trim(),
+            u.AvatarUrl,
+            (u.Master != null) || u.IsMaster,
+            u.Master == null
+                ? null
+                : new MasterProfileResponse(
+                    u.Master.About,
+                    u.Master.Skills,
+                    u.Master.ExperienceYears,
+                    u.Master.Address,
+                    null
+                )
+        ),
+      MasterId = u.Master != null ? (Guid?)u.Master.Id : null
+    })
+    .FirstOrDefaultAsync(ct);
 
-    if (user is null) return NotFound();
+    if (baseDto is null) return NotFound();
 
-    return Ok(ClientProfileMapping.ToDto(user));
+    var dto = baseDto.Dto;
+
+    if (baseDto.Dto.IsMaster && baseDto.MasterId is Guid mid)
+    {
+      var services = await _db.Services
+          .AsNoTracking()
+          .Where(s => s.MasterId == mid)
+          .OrderBy(s => s.Name)
+          .Select(s => new ServiceListItemResponse
+          {
+            Id = s.Id,
+            Name = s.Name,
+            Price = s.Price,
+            DurationMinutes = s.DurationMinutes,
+            Description = s.Description,
+            CreatedAtUtc = s.CreatedAtUtc,
+            UpdatedAtUtc = s.UpdatedAtUtc
+          })
+          .Take(20)
+          .ToListAsync(ct);
+
+      if (dto.Master is not null)
+        dto = dto with { Master = dto.Master with { Services = services } };
+    }
+
+    if (dto.Master is not null && dto.Master.Skills is null)
+      dto = dto with { Master = dto.Master with { Skills = [] } };
+
+    return Ok(dto);
   }
 
   /// <summary>Оновити профіль користувача.</summary>
@@ -72,8 +125,8 @@ public sealed class ProfileController : ControllerBase
     if (u is null) return NotFound();
 
     u.FirstName = (req.FirstName ?? string.Empty).Trim();
-    u.LastName  = (req.LastName  ?? string.Empty).Trim();
-    u.Phone     = (req.Phone     ?? string.Empty).Trim();
+    u.LastName = (req.LastName ?? string.Empty).Trim();
+    u.Phone = (req.Phone ?? string.Empty).Trim();
 
     await _db.SaveChangesAsync(ct);
     await _db.Entry(u).Reference(x => x.Master).LoadAsync(ct);
