@@ -159,7 +159,12 @@ builder.Services.AddProblemDetails(options =>
 });
 
 builder.Services.AddControllers()
-    .AddJsonOptions(o => o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase);
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        o.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    });
+
 
 
 var app = builder.Build();
@@ -172,8 +177,6 @@ fwd.KnownNetworks.Clear();
 fwd.KnownProxies.Clear();
 app.UseForwardedHeaders(fwd);
 
-// Health и корень (возвращают 200, не 404)
-app.MapGet("/healthz", () => Results.Ok("OK"));
 app.MapGet("/", () => Results.Ok("BeTendly API is running"));
 
 using (var scope = app.Services.CreateScope())

@@ -18,7 +18,7 @@ public record UpdateClientProfileRequest(string FirstName, string LastName, stri
 public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 
 // master DTO block
-public record MasterProfileResponse(string? About, List<string> Skills, int? YearsExperience, string? Address = null, List<ServiceListItemResponse>? Services = null);
+public record MasterProfileResponse(string? About, List<string> Skills, int? ExperienceYears, string? Address = null, List<ServiceListItemResponse>? Services = null);
 public record UpsertMasterProfileRequest(string? About, List<string> Skills, int? ExperienceYears, string? Address = null);
 
 

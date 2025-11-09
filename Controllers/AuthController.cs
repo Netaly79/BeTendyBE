@@ -82,14 +82,14 @@ public sealed class AuthController : ControllerBase
     }
     await tx.CommitAsync(ct);
 
-    var access  = _jwt.Generate(user);
+    var access = _jwt.Generate(user);
     var refresh = await _refreshSvc.IssueAsync(user, deviceInfo: Request.Headers["User-Agent"]);
 
     return Ok(new AuthWithRefreshResponse
     {
-        AccessToken  = access.AccessToken,
-        ExpiresAtUtc = access.ExpiresAtUtc,
-        RefreshToken = refresh
+      AccessToken = access.AccessToken,
+      ExpiresAtUtc = access.ExpiresAtUtc,
+      RefreshToken = refresh
     });
   }
 
