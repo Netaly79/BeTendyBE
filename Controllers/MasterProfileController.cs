@@ -31,7 +31,7 @@ public sealed class MasterProfileController : ControllerBase
     /// <response code="401">Неавторизовано (відсутній або прострочений токен).</response>
     /// <response code="403">Доступ заборонено (роль не Master).</response>
     [HttpGet]
-    [SwaggerOperation(Summary = "Отримати профіль майстра", Description = "Потребує ролі Master.")]
+    [SwaggerOperation(Summary = "Отримати профіль майстра - не використовується", Description = "Потребує ролі Master.")]
     [ProducesResponseType(typeof(MasterProfileResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
@@ -57,7 +57,7 @@ public sealed class MasterProfileController : ControllerBase
     /// <response code="403">Роль не Master.</response>
     /// <response code="404">Користувача не знайдено.</response>
     [HttpPut]
-    [SwaggerOperation(Summary = "Оновити профіль майстра", Description = "Upsert. Потребує ролі Master.")]
+    [SwaggerOperation(Summary = "Оновити профіль майстра  - не використовується", Description = "Upsert. Потребує ролі Master.")]
     [ProducesResponseType(typeof(MasterProfileResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

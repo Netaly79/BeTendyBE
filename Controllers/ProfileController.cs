@@ -105,14 +105,14 @@ public sealed class ProfileController : ControllerBase
     return Ok(dto);
   }
 
-  /// <summary>Оновити профіль користувача.</summary>
+  /// <summary>Оновити профіль користувача, не майстра</summary>
   /// <remarks>Оновлює ім'я, прізвище та телефон. Повертає оновлені дані профілю.</remarks>
   /// <response code="200">Профіль оновлено. Повернуто актуальні дані.</response>
   /// <response code="400">Помилка валідації тіла запиту.</response>
   /// <response code="401">Неавторизовано.</response>
   /// <response code="404">Користувача не знайдено.</response>
   [HttpPut]
-  [SwaggerOperation(Summary = "Оновити профіль", Description = "Оновлює поля профілю поточного користувача.")]
+  [SwaggerOperation(Summary = "Оновити профіль, тільки юзера", Description = "Оновлює поля профілю поточного користувача.")]
   [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -150,7 +150,6 @@ public sealed class ProfileController : ControllerBase
   [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-  // опціонально віддаємо 422 як ProblemDetails, якщо хочеш явно відрізняти від 400
   [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
   public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest req, CancellationToken ct)
   {
@@ -181,4 +180,96 @@ public sealed class ProfileController : ControllerBase
 
     return NoContent();
   }
+
+  private static IQueryable<ProfileResponse> BuildProfileQuery(AppDbContext db, Guid userId)
+        => db.Users
+            .AsNoTracking()
+            .Where(u => u.Id == userId /* && !u.IsDeleted && !u.IsBanned */)
+            .Select(u => new ProfileResponse(
+                u.Id,
+                (u.Email ?? string.Empty).Trim(),
+                (u.FirstName ?? string.Empty).Trim(),
+                (u.LastName ?? string.Empty).Trim(),
+                (u.Phone ?? string.Empty).Trim(),
+                u.AvatarUrl,
+                (u.Master != null) || u.IsMaster,
+                u.Master == null
+                    ? null
+                    : new MasterProfileResponse(
+                        u.Master.About,
+                        u.Master.Skills,
+                        u.Master.ExperienceYears,
+                        u.Master.Address,
+                        null
+                    )
+            ));
+
+    [HttpPut("{id:guid}")]
+    [SwaggerOperation(
+        Summary = "Редагувати мій профіль",
+        Description = "Часткове оновлення полів профілю користувача і (за наявності) майстра. Сервіси не змінюються."
+    )]
+    [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ProfileResponse>> UpdateMyProfile(
+        [FromBody] MemberUpdateRequest body,
+        CancellationToken ct)
+    {
+        // 1) Авторизация
+        Guid currentUserId;
+        try { currentUserId = User.GetUserId(); }
+        catch { return Unauthorized(); }
+
+        // 2) Быстрая валидация: есть ли вообще что обновлять?
+        var hasUser = body?.User is not null;
+        var hasMaster = body?.Master is not null;
+        if (!hasUser && !hasMaster)
+            return BadRequest("Nothing to update.");
+
+        // 3) Загружаем пользователя (трекинг нужен для обновления)
+        var user = await _db.Users
+            .FirstOrDefaultAsync(u => u.Id == currentUserId, ct);
+
+        if (user is null) return NotFound();
+
+        // 4) Применяем частичные изменения к User
+        if (hasUser)
+        {
+            var u = body!.User!;
+            if (u.FirstName is not null) user.FirstName = u.FirstName.Trim();
+            if (u.LastName  is not null) user.LastName  = u.LastName.Trim();
+            if (u.Phone     is not null) user.Phone     = u.Phone.Trim();
+            if (u.AvatarUrl is not null) user.AvatarUrl = string.IsNullOrWhiteSpace(u.AvatarUrl) ? null : u.AvatarUrl.Trim();
+        }
+
+        // 5) Применяем частичные изменения к Master (если присланы)
+        if (hasMaster)
+        {
+            // Находим мастер-профиль этого пользователя по userId
+            var master = await _db.Masters.FirstOrDefaultAsync(m => m.UserId == currentUserId, ct);
+            if (master is null)
+                return BadRequest("User is not a master.");
+
+            var m = body!.Master!;
+            if (m.About            is not null) master.About = string.IsNullOrWhiteSpace(m.About) ? null : m.About.Trim();
+            if (m.Address          is not null) master.Address = string.IsNullOrWhiteSpace(m.Address) ? null : m.Address.Trim();
+            if (m.ExperienceYears  is not null) master.ExperienceYears = m.ExperienceYears;
+            if (m.Skills           is not null) master.Skills = m.Skills;
+        }
+
+        // 6) Сохраняем изменения
+        await _db.SaveChangesAsync(ct);
+
+        // 7) Возвращаем свежий профиль (тем же контрактом, что в GET /profile)
+        var dto = await BuildProfileQuery(_db, currentUserId).FirstOrDefaultAsync(ct);
+        if (dto is null) return NotFound(); // маловероятно
+
+        // Нормализация коллекций: фронту удобнее [] вместо null
+        if (dto.Master is not null && dto.Master.Skills is null)
+            dto = dto with { Master = dto.Master with { Skills = [] } };
+
+        return Ok(dto);
+    }
 }
