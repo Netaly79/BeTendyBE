@@ -177,8 +177,6 @@ fwd.KnownNetworks.Clear();
 fwd.KnownProxies.Clear();
 app.UseForwardedHeaders(fwd);
 
-// Health и корень (возвращают 200, не 404)
-app.MapGet("/healthz", () => Results.Ok("OK"));
 app.MapGet("/", () => Results.Ok("BeTendly API is running"));
 
 using (var scope = app.Services.CreateScope())

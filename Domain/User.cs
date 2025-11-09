@@ -38,8 +38,8 @@ namespace BeTendyBE.Domain
         // public double? Rating { get; set; }
         // public int ReviewsCount { get; set; }
 
-        public DateTimeOffset CreatedAtUtc { get; set; }
-        public DateTimeOffset UpdatedAtUtc { get; set; }
+        public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 
         public ICollection<Service> Services { get; set; } = new List<Service>();
 

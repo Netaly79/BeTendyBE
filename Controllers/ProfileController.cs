@@ -39,7 +39,6 @@ public sealed class ProfileController : ControllerBase
   [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
   public async Task<ActionResult<ProfileResponse>> Me(Guid? id, CancellationToken ct)
   {
-
     Guid currentUserId;
     try { currentUserId = User.GetUserId(); }
     catch { return Unauthorized(); }
@@ -103,35 +102,6 @@ public sealed class ProfileController : ControllerBase
       dto = dto with { Master = dto.Master with { Skills = [] } };
 
     return Ok(dto);
-  }
-
-  /// <summary>Оновити профіль користувача, не майстра</summary>
-  /// <remarks>Оновлює ім'я, прізвище та телефон. Повертає оновлені дані профілю.</remarks>
-  /// <response code="200">Профіль оновлено. Повернуто актуальні дані.</response>
-  /// <response code="400">Помилка валідації тіла запиту.</response>
-  /// <response code="401">Неавторизовано.</response>
-  /// <response code="404">Користувача не знайдено.</response>
-  [HttpPut]
-  [SwaggerOperation(Summary = "Оновити профіль, тільки юзера", Description = "Оновлює поля профілю поточного користувача.")]
-  [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
-  [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-  [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
-  [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-  public async Task<ActionResult<ProfileResponse>> Update([FromBody] UpdateClientProfileRequest req, CancellationToken ct)
-  {
-    var userId = User.GetUserId();
-
-    var u = await _db.Users.FirstOrDefaultAsync(x => x.Id == userId, ct);
-    if (u is null) return NotFound();
-
-    u.FirstName = (req.FirstName ?? string.Empty).Trim();
-    u.LastName = (req.LastName ?? string.Empty).Trim();
-    u.Phone = (req.Phone ?? string.Empty).Trim();
-
-    await _db.SaveChangesAsync(ct);
-    await _db.Entry(u).Reference(x => x.Master).LoadAsync(ct);
-
-    return Ok(ClientProfileMapping.ToDto(u));
   }
 
   /// <summary>Змінити пароль поточного користувача.</summary>
@@ -204,7 +174,7 @@ public sealed class ProfileController : ControllerBase
                     )
             ));
 
-    [HttpPut("{id:guid}")]
+    [HttpPut]
     [SwaggerOperation(
         Summary = "Редагувати мій профіль",
         Description = "Часткове оновлення полів профілю користувача і (за наявності) майстра. Сервіси не змінюються."
@@ -242,6 +212,7 @@ public sealed class ProfileController : ControllerBase
             if (u.LastName  is not null) user.LastName  = u.LastName.Trim();
             if (u.Phone     is not null) user.Phone     = u.Phone.Trim();
             if (u.AvatarUrl is not null) user.AvatarUrl = string.IsNullOrWhiteSpace(u.AvatarUrl) ? null : u.AvatarUrl.Trim();
+            
         }
 
         // 5) Применяем частичные изменения к Master (если присланы)
@@ -257,6 +228,7 @@ public sealed class ProfileController : ControllerBase
             if (m.Address          is not null) master.Address = string.IsNullOrWhiteSpace(m.Address) ? null : m.Address.Trim();
             if (m.ExperienceYears  is not null) master.ExperienceYears = m.ExperienceYears;
             if (m.Skills           is not null) master.Skills = m.Skills;
+            master.UpdatedAtUtc = DateTime.UtcNow;
         }
 
         // 6) Сохраняем изменения
