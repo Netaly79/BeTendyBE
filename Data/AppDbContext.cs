@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using BeTendyBE.Domain;
+using BeTendyBE.DTO;
 
 namespace BeTendyBE.Data;
 
@@ -8,8 +9,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Master> Masters => Set<Master>();
-
     public DbSet<Service> Services => Set<Service>();
+    public DbSet<Booking> Bookings => Set<Booking>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -91,5 +92,39 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(s => s.MasterId)
             .OnDelete(DeleteBehavior.Cascade);
         });
+
+        // ---- Bookings -----
+        b.Entity<Booking>(e =>
+        {
+            // Основной периодный индекс
+            e.HasIndex(x => new { x.MasterId, x.StartUtc, x.EndUtc });
+
+            // Обязательные поля
+            e.Property(x => x.MasterId).IsRequired();
+            e.Property(x => x.ClientId); // сделай .IsRequired() только если точно надо
+            e.Property(x => x.Status).IsRequired();
+            e.Property(x => x.IdempotencyKey).IsRequired().HasMaxLength(100);
+
+            // Типы + дефолты времени
+            e.Property(x => x.StartUtc).HasColumnType("timestamptz").IsRequired();
+            e.Property(x => x.EndUtc).HasColumnType("timestamptz").IsRequired();
+            e.Property(x => x.CreatedAtUtc).HasColumnType("timestamptz").HasDefaultValueSql("NOW()");
+            e.Property(x => x.HoldExpiresUtc).HasColumnType("timestamptz");
+
+            // Check-констрейнты
+            e.ToTable(tb =>
+            {
+                tb.HasCheckConstraint("CK_Bookings_StartBeforeEnd", "\"EndUtc\" > \"StartUtc\"");
+                tb.HasCheckConstraint("CK_Bookings_StartOnHour",
+               "EXTRACT(MINUTE FROM \"StartUtc\") = 0 AND EXTRACT(SECOND FROM \"StartUtc\") = 0");
+            });
+
+            // Идемпотентность: клиент+мастер+ключ
+            e.HasIndex(x => new { x.ClientId, x.MasterId, x.IdempotencyKey }).IsUnique();
+
+            // Индекс для уборки протухших hold'ов
+            e.HasIndex(x => new { x.Status, x.HoldExpiresUtc });
+        });
+
     }
 }
