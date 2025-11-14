@@ -113,6 +113,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<UpdateClientProfileValidato
 builder.Services.AddValidatorsFromAssemblyContaining<ChangePasswordValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpsertMasterProfileValidator>();
 builder.Services.AddScoped<IMasterService, MasterService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddHostedService<DailyBookingCleanupService>();
 
 builder.Services.AddSwaggerGen(c =>
 {

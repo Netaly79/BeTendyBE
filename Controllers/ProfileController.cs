@@ -13,7 +13,6 @@ namespace BeTendyBE.Controllers;
 
 [ApiController]
 [Route("member")]
-[Authorize]
 [Produces("application/json")]
 public sealed class ProfileController : ControllerBase
 {
@@ -39,11 +38,7 @@ public sealed class ProfileController : ControllerBase
   [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
   public async Task<ActionResult<ProfileResponse>> Me(Guid? id, CancellationToken ct)
   {
-    Guid currentUserId;
-    try { currentUserId = User.GetUserId(); }
-    catch { return Unauthorized(); }
-
-    var targetUserId = id ?? currentUserId;
+    var targetUserId = id ?? User.GetUserId();
     var baseDto = await _db.Users
     .AsNoTracking()
     .Where(u => u.Id == targetUserId /* && !u.IsDeleted && !u.IsBanned */)
@@ -115,6 +110,7 @@ public sealed class ProfileController : ControllerBase
   /// <response code="404">Користувача не знайдено.</response>
   /// <response code="422">Невірний поточний пароль.</response>
   [HttpPatch("password")]
+  [Authorize]
   [SwaggerOperation(Summary = "Змінити пароль", Description = "Скидання пароля за умови правильного поточного пароля.")]
   [ProducesResponseType(StatusCodes.Status204NoContent)]
   [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -175,6 +171,7 @@ public sealed class ProfileController : ControllerBase
             ));
 
     [HttpPut]
+    [Authorize]
     [SwaggerOperation(
         Summary = "Редагувати мій профіль",
         Description = "Часткове оновлення полів профілю користувача і (за наявності) майстра. Сервіси не змінюються."

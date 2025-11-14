@@ -96,22 +96,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // ---- Bookings -----
         b.Entity<Booking>(e =>
         {
-            // Основной периодный индекс
             e.HasIndex(x => new { x.MasterId, x.StartUtc, x.EndUtc });
 
-            // Обязательные поля
             e.Property(x => x.MasterId).IsRequired();
             e.Property(x => x.ClientId); // сделай .IsRequired() только если точно надо
             e.Property(x => x.Status).IsRequired();
             e.Property(x => x.IdempotencyKey).IsRequired().HasMaxLength(100);
 
-            // Типы + дефолты времени
             e.Property(x => x.StartUtc).HasColumnType("timestamptz").IsRequired();
             e.Property(x => x.EndUtc).HasColumnType("timestamptz").IsRequired();
             e.Property(x => x.CreatedAtUtc).HasColumnType("timestamptz").HasDefaultValueSql("NOW()");
             e.Property(x => x.HoldExpiresUtc).HasColumnType("timestamptz");
 
-            // Check-констрейнты
             e.ToTable(tb =>
             {
                 tb.HasCheckConstraint("CK_Bookings_StartBeforeEnd", "\"EndUtc\" > \"StartUtc\"");
@@ -119,10 +115,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                "EXTRACT(MINUTE FROM \"StartUtc\") = 0 AND EXTRACT(SECOND FROM \"StartUtc\") = 0");
             });
 
-            // Идемпотентность: клиент+мастер+ключ
             e.HasIndex(x => new { x.ClientId, x.MasterId, x.IdempotencyKey }).IsUnique();
-
-            // Индекс для уборки протухших hold'ов
             e.HasIndex(x => new { x.Status, x.HoldExpiresUtc });
         });
 

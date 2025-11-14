@@ -1,22 +1,23 @@
 using BeTendyBE.Domain;
 
-namespace BeTendyBE.DTO;
+public record CreateBookingRequest(
+    Guid MasterId,
+    Guid ClientId,
+    Guid ServiceId,
+    DateTimeOffset StartUtc,
+    string IdempotencyKey
+);
 
-public enum BookingStatus { Pending = 0, Confirmed = 1, Cancelled = 2 }
+public record BookingResponse(
+    Guid Id,
+    Guid MasterId,
+    Guid ClientId,
+    Guid ServiceId,
+    BookingStatus Status,
+    DateTimeOffset StartUtc,
+    DateTimeOffset EndUtc,
+    DateTimeOffset CreatedAtUtc,
+    DateTimeOffset? HoldExpiresUtc
+);
 
-public class Booking
-{
-    public Guid Id { get; set; }
-    public Guid MasterId { get; set; }
-    public Guid ClientId { get; set; }
-    public Guid ServiceId { get; set; }
-    public BookingStatus Status { get; set; }
-    public DateTime StartUtc { get; set; }
-    public DateTime EndUtc { get; set; }
-    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
-    public DateTime? HoldExpiresUtc { get; set; }
-    public string IdempotencyKey { get; set; } = string.Empty;
-
-    public Master Master { get; set; } = default!;
-    public User? Client { get; set; }
-}
+public record CancelBookingRequest(Guid BookingId);
