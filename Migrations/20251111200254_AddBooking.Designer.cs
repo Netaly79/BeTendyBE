@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using BeTendyBE.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,15 +13,18 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BeTendyBE.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251111200254_AddBooking")]
+    partial class AddBooking
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "8.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "btree_gist");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("BeTendyBE.DTO.Booking", b =>
@@ -35,17 +39,15 @@ namespace BeTendyBE.Migrations
                         .HasColumnName("client_id");
 
                     b.Property<DateTime>("CreatedAtUtc")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("created_at_utc")
-                        .HasDefaultValueSql("NOW()");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
 
                     b.Property<DateTime>("EndUtc")
-                        .HasColumnType("timestamptz")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("end_utc");
 
                     b.Property<DateTime?>("HoldExpiresUtc")
-                        .HasColumnType("timestamptz")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("hold_expires_utc");
 
                     b.Property<string>("IdempotencyKey")
@@ -63,7 +65,7 @@ namespace BeTendyBE.Migrations
                         .HasColumnName("service_id");
 
                     b.Property<DateTime>("StartUtc")
-                        .HasColumnType("timestamptz")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("start_utc");
 
                     b.Property<int>("Status")
@@ -73,12 +75,12 @@ namespace BeTendyBE.Migrations
                     b.HasKey("Id")
                         .HasName("pk_booking");
 
-                    b.HasIndex("Status", "HoldExpiresUtc")
-                        .HasDatabaseName("ix_booking_status_hold_expires_utc");
+                    b.HasIndex("ClientId")
+                        .HasDatabaseName("ix_booking_client_id");
 
-                    b.HasIndex("ClientId", "MasterId", "IdempotencyKey")
+                    b.HasIndex("MasterId", "IdempotencyKey")
                         .IsUnique()
-                        .HasDatabaseName("ix_booking_client_id_master_id_idempotency_key");
+                        .HasDatabaseName("ix_booking_master_id_idempotency_key");
 
                     b.HasIndex("MasterId", "StartUtc", "EndUtc")
                         .HasDatabaseName("ix_booking_master_id_start_utc_end_utc");
@@ -86,8 +88,6 @@ namespace BeTendyBE.Migrations
                     b.ToTable("booking", null, t =>
                         {
                             t.HasCheckConstraint("CK_Bookings_StartBeforeEnd", "\"EndUtc\" > \"StartUtc\"");
-
-                            t.HasCheckConstraint("CK_Bookings_StartOnHour", "EXTRACT(MINUTE FROM \"StartUtc\") = 0 AND EXTRACT(SECOND FROM \"StartUtc\") = 0");
                         });
                 });
 

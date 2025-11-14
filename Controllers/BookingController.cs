@@ -1,0 +1,171 @@
+using BeTendlyBE.Services;
+using BeTendyBE.Data;
+using BeTendyBE.Domain;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace BeTendyBE.Controllers;
+
+[ApiController]
+[Route("bookings")]
+public class BookingController : ControllerBase
+{
+    private readonly IBookingService _svc;
+
+    public BookingController(IBookingService svc) => _svc = svc;
+
+    /// <summary>
+    /// Створення нового бронювання (ідемпотентно).
+    /// </summary>
+    /// <remarks>
+    /// Створює нове бронювання для зазначених майстра, клієнта та послуги.  
+    /// Якщо слот уже зайнятий або бронювання з тим самим <c>idempotencyKey</c> вже існує — повертається помилка або попередній результат.
+    ///
+    /// <br/><br/>
+    /// **Правила:**
+    /// - Бронювання можливе лише на вільний часовий слот.
+    /// - Час початку буде автоматично нормалізовано до найближчого інтервалу (наприклад, 30 хв).
+    /// - Тимчасове бронювання зберігається до закінчення <c>HoldExpiresUtc</c>.
+    ///
+    /// <br/><br/>
+    /// </remarks>
+    /// <response code="201">Бронювання успішно створено.</response>
+    /// <response code="400">Помилка валідації або перетин із наявним бронюванням.</response>
+    /// <response code="409">Бронювання з таким <c>idempotencyKey</c> уже існує.</response>
+    /// <response code="500">Внутрішня помилка сервера.</response>
+    [HttpPost]
+    [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<BookingResponse>> Create([FromBody] CreateBookingRequest req, CancellationToken ct)
+    {
+        var result = await _svc.CreateAsync(req, ct);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+    }
+
+    /// <summary>
+    /// Отримати бронювання за ідентифікатором.
+    /// </summary>
+    /// <remarks>
+    /// Повертає повну інформацію про конкретне бронювання за його унікальним <c>id</c>.
+    ///
+    /// <br/><br/>
+    /// </remarks>
+    /// <param name="id">Унікальний ідентифікатор бронювання.</param>
+    /// <response code="200">Бронювання знайдено та успішно повернуто.</response>
+    /// <response code="404">Бронювання з указаним <c>id</c> не знайдено.</response>
+    /// <response code="500">Внутрішня помилка сервера.</response>
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+
+    public async Task<ActionResult<BookingResponse>> GetById([FromServices] AppDbContext db, Guid id, CancellationToken ct)
+    {
+        var entity = await db.Bookings.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (entity is null) return NotFound();
+        return Ok(new BookingResponse(entity.Id, entity.MasterId, entity.ClientId, entity.ServiceId,
+            entity.Status, entity.StartUtc, entity.EndUtc, entity.CreatedAtUtc, entity.HoldExpiresUtc));
+    }
+
+    [HttpPost("{id:guid}/cancel")]
+    public async Task<ActionResult> Cancel(Guid id, CancellationToken ct)
+    {
+        var ok = await _svc.CancelAsync(id, ct);
+        return ok ? NoContent() : NotFound();
+    }
+
+    /// <summary>
+    /// Список бронювань для майстра або клієнта.
+    /// </summary>
+    /// <remarks>
+    /// Потрібно вказати рівно один параметр:
+    /// - <c>master_id</c> — бронювання майстра;
+    /// - <c>client_id</c> — бронювання клієнта.
+    ///
+    /// Якщо <c>status</c> не вказано — повертаються бронювання з усіма статусами.
+    /// Якщо вказано — фільтрація тільки за цим статусом.
+    ///
+    /// Діапазон часу:
+    /// - Якщо <c>from_utc</c> і <c>to_utc</c> **не вказані** — використовується тиждень від поточного часу (UTC).
+    /// - Якщо вказані обидва — використовується заданий діапазон.
+    /// - Якщо вказано лише один — <c>400 Bad Request</c>.
+    /// </remarks>
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<BookingResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IEnumerable<BookingResponse>>> GetList(
+        [FromServices] AppDbContext db,
+        [FromQuery(Name = "masterId")] Guid? masterId,
+        [FromQuery(Name = "clientId")] Guid? clientId,
+        [FromQuery(Name = "fromUtc")] DateTime? fromUtc,
+        [FromQuery(Name = "toUtc")] DateTime? toUtc,
+        [FromQuery] BookingStatus? status,
+        CancellationToken ct)
+    {
+        var hasMaster = masterId.HasValue && masterId.Value != Guid.Empty;
+        var hasClient = clientId.HasValue && clientId.Value != Guid.Empty;
+
+        if (!hasMaster && !hasClient)
+            return BadRequest(new { message = "Specify exactly one of 'master_id' or 'client_id'." });
+
+        if (hasMaster && hasClient)
+            return BadRequest(new { message = "Only one of 'master_id' or 'client_id' can be specified at the same time." });
+
+        var nowUtc = DateTime.UtcNow;
+
+        // диапазон дат
+        var hasFrom = fromUtc.HasValue;
+        var hasTo = toUtc.HasValue;
+
+        if (!hasFrom && !hasTo)
+        {
+            fromUtc = nowUtc;
+            toUtc = nowUtc.AddDays(7);
+        }
+        else if (hasFrom != hasTo)
+        {
+            return BadRequest(new { message = "Both 'from_utc' and 'to_utc' must be specified together." });
+        }
+
+        if (fromUtc >= toUtc)
+        {
+            return BadRequest(new { message = "'from_utc' must be earlier than 'to_utc'." });
+        }
+
+        var query = db.Bookings
+            .AsNoTracking()
+            .Where(b => b.StartUtc >= fromUtc && b.StartUtc < toUtc);
+
+        // фильтр по роли
+        if (hasMaster)
+            query = query.Where(b => b.MasterId == masterId);
+        else
+            query = query.Where(b => b.ClientId == clientId);
+
+        // опциональный фильтр по статусу
+        if (status.HasValue)
+        {
+            query = query.Where(b => b.Status == status.Value);
+        }
+
+        var items = await query
+            .OrderBy(b => b.StartUtc)
+            .Select(b => new BookingResponse(
+                b.Id,
+                b.MasterId,
+                b.ClientId,
+                b.ServiceId,
+                b.Status,
+                b.StartUtc,
+                b.EndUtc,
+                b.CreatedAtUtc,
+                b.HoldExpiresUtc))
+            .ToListAsync(ct);
+
+        return Ok(items);
+    }
+}
