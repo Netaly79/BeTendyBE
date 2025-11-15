@@ -27,12 +27,20 @@ public sealed class ProfileController : ControllerBase
   }
 
   /// <summary>Отримати поточний профіль користувача.</summary>
+  /// 
+  /// <remarks>
+  /// Без параметра повертає мій профіль. З параметром id — профіль користувача за ідентифікатором.
+  /// <para>
+  /// Щоб відобразити аватарку на фронті, необхідно поєднати
+  /// <c>baseUrl</c> API з <c>avatarUrl</c>, наприклад:
+  /// <br/>
+  /// <c>https://your-app.azurewebsites.net/avatars/ddd41e45...jpg</c>
+  /// </para>
+  /// </remarks>
   /// <response code="200">Успішно. Повернуто актуальні дані профілю.</response>
   /// <response code="401">Неавторизовано: відсутній або недійсний токен.</response>
   /// <response code="404">Користувача не знайдено.</response>
   [HttpGet("{id:guid?}")]
-  [SwaggerOperation(Summary = "Отримати профіль",
-    Description = "Без параметра повертає мій профіль. З параметром id — профіль користувача за ідентифікатором.")]
   [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -208,8 +216,6 @@ public sealed class ProfileController : ControllerBase
       if (u.FirstName is not null) user.FirstName = u.FirstName.Trim();
       if (u.LastName is not null) user.LastName = u.LastName.Trim();
       if (u.Phone is not null) user.Phone = u.Phone.Trim();
-      if (u.AvatarUrl is not null) user.AvatarUrl = string.IsNullOrWhiteSpace(u.AvatarUrl) ? null : u.AvatarUrl.Trim();
-
     }
 
     // 5) Применяем частичные изменения к Master (если присланы)
@@ -242,12 +248,38 @@ public sealed class ProfileController : ControllerBase
     return Ok(dto);
   }
 
+  /// <summary>
+  /// Завантажити або оновити аватарку користувача.
+  /// </summary>
+  /// <remarks>
+  /// Завантажує аватарку у <c>wwwroot/avatars</c> і повертає шлях до неї.
+  ///
+  /// <para>
+  /// Після завантаження аватарка буде доступна за URL:
+  /// <c>/avatars/{userId}.jpg</c>.
+  /// </para>
+  ///
+  /// <para>
+  /// Наприклад:
+  /// <c>https://your-app.azurewebsites.net/avatars/ddd41e45...jpg</c>
+  /// </para>
+  ///
+  /// <para>
+  /// Підтримується тільки <c>image/*</c>. Розмір до 2 МБ.
+  /// </para>
+  /// </remarks>
+  /// <param name="file">Файл зображення.</param>
+  /// <response code="200">Аватарку успішно завантажено. Повертає шлях до файлу.</response>
+  /// <response code="400">Некоректний файл або формат.</response>
+  /// <response code="401">Неавторизовано.</response>
   [HttpPost("me/avatar")]
   [Authorize]
+  [Produces("application/json")]
+  [Consumes("multipart/form-data")]
   [RequestSizeLimit(2_000_000)]
   public async Task<IActionResult> UploadAvatar(
-  IFormFile file,
-  [FromServices] IWebHostEnvironment env)
+    IFormFile file,
+    [FromServices] IWebHostEnvironment env)
   {
     if (file == null || file.Length == 0)
       return BadRequest("Файл не завантажено.");
@@ -257,7 +289,6 @@ public sealed class ProfileController : ControllerBase
 
     var userId = User.GetUserId();
 
-    // путь до wwwroot
     var webRoot = env.WebRootPath;
     if (string.IsNullOrEmpty(webRoot))
     {
