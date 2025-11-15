@@ -25,9 +25,9 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 string? envConn1 = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
-string? envConn2 = Environment.GetEnvironmentVariable("POSTGRESQLCONNSTR_DefaultConnection"); // <-- для Type=PostgreSQL
-string? envConn3 = Environment.GetEnvironmentVariable("CUSTOMCONNSTR_DefaultConnection");     // если вдруг поменяешь Type на Custom
-string? envUrl = Environment.GetEnvironmentVariable("DATABASE_URL");               // формат postgres://user:pass@host:port/db
+string? envConn2 = Environment.GetEnvironmentVariable("POSTGRESQLCONNSTR_DefaultConnection");
+string? envConn3 = Environment.GetEnvironmentVariable("CUSTOMCONNSTR_DefaultConnection");
+string? envUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
 
 string BuildFromDatabaseUrl(string url)
@@ -163,8 +163,8 @@ builder.Services.AddProblemDetails(options =>
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
     {
-        o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        o.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+      o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+      o.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
 
 

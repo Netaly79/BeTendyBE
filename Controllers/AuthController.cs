@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Security.Claims;
 
 using BeTendlyBE.Services;
 using BeTendyBE.Data;
 using BeTendyBE.Domain;
 using BeTendyBE.DTO;
-using System.Security.Claims;
+using BeTendyBE.Infrastructure.Identity;
 
 namespace BeTendyBE.Controllers;
 
@@ -192,17 +193,34 @@ public sealed class AuthController : ControllerBase
     });
   }
 
-  /// <summary>Оновлення токенів за refresh-токеном.</summary>
+  /// <summary>
+  /// Оновити токен (refresh) — отримати новий access-токен і новий refresh-токен.
+  /// </summary>
   /// <remarks>
-  /// Приймає <c>refreshToken</c>. Повертає нову пару <c>access</c>/<c>refresh</c>.
-  /// Порожній або недійсний refresh — 400/401 відповідно.
+  /// Використовується для продовження сесії без повторного логіну.
+  ///
+  /// <para>
+  /// Потрібно передати дійсний <c>refreshToken</c>. Сервіс виконує:
+  /// <list type="bullet">
+  ///   <item><description>валідацію refresh-токена;</description></item>
+  ///   <item><description>перевірку, що токен не відкликаний (<c>revoked</c>) і не прострочений;</description></item>
+  ///   <item><description>ротацію refresh-токена (старий — відкликається, видається новий);</description></item>
+  ///   <item><description>генерацію нового access-токена.</description></item>
+  /// </list>
+  /// </para>
   /// </remarks>
-  /// <response code="200">Оновлено. Повернено нові токени.</response>
-  /// <response code="400">Відсутній або некоректний формат refresh-токена.</response>
-  /// <response code="401">Недійсний/протермінований refresh-токен.</response>
+  /// <param name="req">Запит із refresh-токеном, який потрібно оновити.</param>
+  /// <response code="200">
+  /// Успішне оновлення. Повертає новий access-токен, час його дії та новий refresh-токен.
+  /// </response>
+  /// <response code="400">
+  /// Refresh-токен не передано у запиті.
+  /// </response>
+  /// <response code="401">
+  /// Refresh-токен некоректний, прострочений, відкликаний або не належить користувачу.
+  /// </response>
   [HttpPost("refresh")]
   [AllowAnonymous]
-  [SwaggerOperation(Summary = "Оновити токени", Description = "Обміняти дійсний refresh на нову пару токенів.")]
   [ProducesResponseType(typeof(AuthWithRefreshResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -219,8 +237,6 @@ public sealed class AuthController : ControllerBase
         Instance = HttpContext?.Request?.Path.Value
       });
     }
-
-    // Валідація може кидати виключення — краще повертати керований 401
     try
     {
       var (user, stored) = await _refreshSvc.ValidateAsync(req.RefreshToken);
@@ -243,6 +259,79 @@ public sealed class AuthController : ControllerBase
         Title = "Invalid refresh token",
         Status = StatusCodes.Status401Unauthorized,
         Detail = "The provided refresh token is invalid or expired.",
+        Instance = HttpContext?.Request?.Path.Value
+      });
+    }
+  }
+
+  /// <summary>
+  /// Вийти з системи (logout) для поточного пристрою.
+  /// </summary>
+  /// <remarks>
+  /// Logout реалізовано через відкликання (revoke) refresh-токена.
+  ///
+  /// </remarks>
+  /// <param name="req">Запит із refresh-токеном, який потрібно відкликати.</param>
+  /// <response code="204">
+  /// Logout виконано успішно, refresh-токен відкликано (або вже був недійсним).
+  /// </response>
+  /// <response code="400">
+  /// Refresh-токен не передано у запиті.
+  /// </response>
+  /// <response code="401">
+  /// Refresh-токен некоректний, не належить поточному користувачу
+  /// або вже прострочений / відкликаний.
+  /// </response>
+  [HttpPost("logout")]
+  [Authorize]
+  [Produces("application/json")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+  public async Task<IActionResult> Logout([FromBody] RefreshRequest req)
+  {
+    if (string.IsNullOrWhiteSpace(req.RefreshToken))
+    {
+      return BadRequest(new ProblemDetails
+      {
+        Type = "https://httpstatuses.io/400",
+        Title = "Refresh token required",
+        Status = StatusCodes.Status400BadRequest,
+        Detail = "The refresh token must be provided.",
+        Instance = HttpContext?.Request?.Path.Value
+      });
+    }
+
+    var currentUserId = User.GetUserId();
+
+    try
+    {
+      var (user, stored) = await _refreshSvc.ValidateAsync(req.RefreshToken);
+
+      if (user.Id != currentUserId)
+      {
+        return Unauthorized(new ProblemDetails
+        {
+          Type = "https://httpstatuses.io/401",
+          Title = "Invalid refresh token",
+          Status = StatusCodes.Status401Unauthorized,
+          Detail = "The provided refresh token does not belong to the current user.",
+          Instance = HttpContext?.Request?.Path.Value
+        });
+      }
+
+      await _refreshSvc.RevokeAsync(stored, HttpContext.RequestAborted);
+
+      return NoContent();
+    }
+    catch (Exception)
+    {
+      return Unauthorized(new ProblemDetails
+      {
+        Type = "https://httpstatuses.io/401",
+        Title = "Invalid refresh token",
+        Status = StatusCodes.Status401Unauthorized,
+        Detail = "The provided refresh token is invalid, expired, or already revoked.",
         Instance = HttpContext?.Request?.Path.Value
       });
     }
