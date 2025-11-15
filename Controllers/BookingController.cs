@@ -71,7 +71,6 @@ public class BookingController : ControllerBase
             entity.Status, entity.StartUtc, entity.EndUtc, entity.CreatedAtUtc, entity.HoldExpiresUtc));
     }
 
-
     /// <summary>
     /// Скасувати бронювання.
     /// </summary>
