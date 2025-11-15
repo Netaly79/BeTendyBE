@@ -1,6 +1,8 @@
 using BeTendlyBE.Services;
 using BeTendyBE.Data;
 using BeTendyBE.Domain;
+using BeTendyBE.Infrastructure.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -69,11 +71,104 @@ public class BookingController : ControllerBase
             entity.Status, entity.StartUtc, entity.EndUtc, entity.CreatedAtUtc, entity.HoldExpiresUtc));
     }
 
-    [HttpPost("{id:guid}/cancel")]
-    public async Task<ActionResult> Cancel(Guid id, CancellationToken ct)
+
+    /// <summary>
+    /// Скасувати бронювання.
+    /// </summary>
+    /// <remarks>
+    /// Доступно для користувача, який створив бронювання (Client),
+    /// або для майстра, якому належить бронювання (Master).
+    ///
+    /// <para>Можна скасувати бронювання зі статусами <c>Pending</c>.</para>
+    /// <para>Повторне скасування повертає <c>400 Bad Request</c>.</para>
+    /// </remarks>
+    /// <param name="db"></param>
+    /// <param name="id">Ідентифікатор бронювання.</param>
+    /// <response code="204">Бронювання успішно скасовано.</response>
+    /// <response code="400">Бронювання вже скасоване або має недопустимий статус.</response>
+    /// <response code="401">Неавторизовано.</response>
+    /// <response code="403">Користувач не має доступу до цього бронювання.</response>
+    /// <response code="404">Бронювання не знайдено.</response>
+    [HttpPut("{id:guid}/reject")]
+    [Authorize]
+    public async Task<IActionResult> CancelBooking([FromServices] AppDbContext db, Guid id)
     {
-        var ok = await _svc.CancelAsync(id, ct);
-        return ok ? NoContent() : NotFound();
+        var userId = User.GetUserId();
+
+        var booking = await db.Bookings
+        .Include(b => b.Master)
+        .FirstOrDefaultAsync(b => b.Id == id);
+
+        if (booking == null)
+            return NotFound("Booking not found");
+
+        if (booking.Status == BookingStatus.Cancelled)
+            return BadRequest("Booking already cancelled.");
+
+
+        bool isClient = booking.ClientId == userId;
+        bool isMaster = booking.Master != null && booking.Master.UserId == userId;
+
+        if (!isClient && !isMaster)
+            return Forbid(isClient.ToString(), isMaster.ToString());
+
+        booking.Status = BookingStatus.Cancelled;
+        booking.HoldExpiresUtc = null;
+
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Підтвердити бронювання.
+    /// </summary>
+    /// <remarks>
+    /// Доступно для майстра, якому належить бронювання (Master).
+    ///
+    /// <para>Можна підтвердити бронювання зі статусами <c>Pending</c>.</para>
+    /// <para>Повторне підтвердження повертає <c>400 Bad Request</c>.</para>
+    /// </remarks>
+    /// <param name="db"></param>
+    /// <param name="id">Ідентифікатор бронювання.</param>
+    /// <response code="204">Бронювання успішно підтверджено.</response>
+    /// <response code="400">Бронювання вже підтверджене або має недопустимий статус.</response>
+    /// <response code="401">Неавторизовано.</response>
+    /// <response code="403">Користувач не має доступу до цього бронювання.</response>
+    /// <response code="404">Бронювання не знайдено.</response>
+    [HttpPut("{id:guid}/confirm")]
+    [Authorize(Roles = "Master")]
+    public async Task<IActionResult> ConfirmBooking([FromServices] AppDbContext db, Guid id)
+    {
+        var userId = User.GetUserId();
+
+        var booking = await db.Bookings
+            .FirstOrDefaultAsync(b => b.Id == id);
+
+        if (booking == null)
+            return NotFound("Booking not found");
+
+        if (booking.Master != null && booking.Master.UserId == userId)
+            return Forbid();
+        var masterId = booking.Master?.UserId;
+
+        if (booking.Status != BookingStatus.Pending)
+            return BadRequest("Only pending bookings can be confirmed.");
+
+        // Проверяем пересечения (тот же код, что в create)
+        var hasOverlap = await db.Bookings.AnyAsync(b =>
+            b.MasterId == masterId &&
+            b.Status == BookingStatus.Confirmed &&
+            b.Id != booking.Id &&
+            !(booking.EndUtc <= b.StartUtc || booking.StartUtc >= b.EndUtc));
+
+        if (hasOverlap)
+            return Conflict("Time slot overlaps another confirmed booking.");
+
+        booking.Status = BookingStatus.Confirmed;
+        booking.HoldExpiresUtc = null;
+
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     /// <summary>
