@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BeTendyBE.Controllers;
 
 [ApiController]
-[Route("api/availability")]
+[Route("availability")]
 public class AvailabilityController : ControllerBase
 {
   /// <summary>
@@ -25,6 +25,7 @@ public class AvailabilityController : ControllerBase
   /// <param name="db">Контекст бази даних.</param>
   /// <param name="masterId">Ідентифікатор майстра (query: <c>master_id</c>).</param>
   /// <param name="date">Дата у форматі <c>YYYY-MM-DD</c> (UTC).</param>
+  /// <param name="ct"></param>
   /// <response code="200">Повернуто список вільних слотів.</response>
   /// <response code="400">Некоректні або відсутні параметри.</response>
   [HttpGet("slots")]
@@ -46,17 +47,14 @@ public class AvailabilityController : ControllerBase
 
     var kyiv = TimeZoneInfo.FindSystemTimeZoneById("Europe/Kyiv");
 
-    // 09:00 по Киеву в выбранную дату
     var localStart = day.ToDateTime(new TimeOnly(9, 0), DateTimeKind.Unspecified);
     var localEnd = day.ToDateTime(new TimeOnly(17, 0), DateTimeKind.Unspecified);
 
-    // переводим в UTC через таймзону
     var dayStartUtc = TimeZoneInfo.ConvertTimeToUtc(localStart, kyiv);
     var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(localEnd, kyiv);
 
     var nowUtc = DateTime.UtcNow;
 
-    // Усі активні (Pending/Confirmed) броні майстра, що перетинаються з цим днем
     var busyBookings = await db.Bookings
         .AsNoTracking()
         .Where(b => b.MasterId == masterId.Value

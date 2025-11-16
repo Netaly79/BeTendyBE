@@ -189,6 +189,7 @@ public sealed class AuthController : ControllerBase
       Email = user.Email,
       FirstName = user.FirstName,
       LastName = user.LastName,
+      AvatarUrl = user.AvatarUrl ?? string.Empty,
       IsMaster = user.IsMaster
     });
   }
