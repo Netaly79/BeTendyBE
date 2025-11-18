@@ -11,6 +11,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Master> Masters => Set<Master>();
     public DbSet<Service> Services => Set<Service>();
     public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -119,5 +120,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasIndex(x => new { x.Status, x.HoldExpiresUtc });
         });
 
+        // ----- PasswordResetToken -----
+        b.Entity<PasswordResetToken>(e =>
+        {
+            e.ToTable("password_reset_token");
+
+            e.HasKey(x => x.Id);
+
+            e.HasIndex(x => x.Token).IsUnique();
+            e.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }
