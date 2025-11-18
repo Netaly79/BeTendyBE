@@ -167,7 +167,7 @@ builder.Services.AddControllers()
       o.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
 
-
+builder.Services.AddSingleton<EmailService>();
 
 var app = builder.Build();
 
