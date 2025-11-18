@@ -167,6 +167,14 @@ builder.Services.AddControllers()
       o.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
 
+var env = builder.Environment.EnvironmentName;
+
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
+
+var azureCommConnection = builder.Configuration["AzureCommunicationConnectionString"];
 builder.Services.AddSingleton<EmailService>();
 
 var app = builder.Build();
