@@ -18,6 +18,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Swashbuckle.AspNetCore.Filters;
 using System.Text.Json;
+using Azure.Communication.Email;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -175,7 +176,12 @@ builder.Configuration
     .AddEnvironmentVariables();
 
 var azureCommConnection = builder.Configuration["AzureCommunicationConnectionString"];
-builder.Services.AddSingleton<EmailService>();
+builder.Services.AddSingleton(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var connStr = config["AzureCommunicationConnectionString"];
+    return new EmailClient(connStr);
+});
 
 var app = builder.Build();
 
