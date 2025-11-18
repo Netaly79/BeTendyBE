@@ -179,7 +179,11 @@ var azureCommConnection = builder.Configuration["AzureCommunicationConnectionStr
 builder.Services.AddSingleton(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
-    var connStr = config["AzureCommunicationConnectionString"];
+    var connStr = config["AzureCommunication:ConnectionString"];
+
+    if (string.IsNullOrWhiteSpace(connStr))
+        throw new InvalidOperationException("AzureCommunicationConnectionString is not configured.");
+
     return new EmailClient(connStr);
 });
 
@@ -233,7 +237,16 @@ app.UseExceptionHandler(errorApp =>
           });
 });
 
-
+app.MapGet("/debug/email-config", (IConfiguration config) =>
+{
+    var value = config["AzureCommunication:ConnectionString"];
+    return new
+    {
+        hasValue = !string.IsNullOrWhiteSpace(value),
+        length = value?.Length ?? 0
+        // сам connection string не показываем!
+    };
+});
 
 app.UseHttpsRedirection();
 app.UseRouting();
