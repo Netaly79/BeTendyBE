@@ -175,7 +175,7 @@ builder.Configuration
     .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
 
-var azureCommConnection = builder.Configuration["AzureCommunicationConnectionString"];
+var azureCommConnection = builder.Configuration["AzureCommunication:ConnectionString"];
 builder.Services.AddSingleton(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
@@ -239,13 +239,20 @@ app.UseExceptionHandler(errorApp =>
 
 app.MapGet("/debug/email-config", (IConfiguration config) =>
 {
-    var value = config["AzureCommunication:ConnectionString"];
-    return new
-    {
-        hasValue = !string.IsNullOrWhiteSpace(value),
-        length = value?.Length ?? 0
-        // сам connection string не показываем!
-    };
+  var value = config["AzureCommunication:ConnectionString"];
+  return new
+  {
+    hasValue = !string.IsNullOrWhiteSpace(value),
+    length = value?.Length ?? 0
+    // сам connection string не показываем!
+  };
+});
+
+app.MapGet("/debug/config-all", (IConfiguration config) =>
+{
+    return config.AsEnumerable()
+                 .Where(kvp => kvp.Key.Contains("Azure", StringComparison.OrdinalIgnoreCase))
+                 .ToDictionary(k => k.Key, v => v.Value);
 });
 
 app.UseHttpsRedirection();
