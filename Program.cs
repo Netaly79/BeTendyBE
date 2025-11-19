@@ -248,12 +248,49 @@ app.MapGet("/debug/email-config", (IConfiguration config) =>
   };
 });
 
-app.MapGet("/debug/config-all", (IConfiguration config) =>
+app.MapPost("/debug/email-test", async (EmailClient emailClient) =>
 {
-    return config.AsEnumerable()
-                 .Where(kvp => kvp.Key.Contains("Azure", StringComparison.OrdinalIgnoreCase))
-                 .ToDictionary(k => k.Key, v => v.Value);
+    try
+    {
+        // подставь СВОЙ адрес почты, на который можно послать тест
+        var to = "netaly79@gmail.com";
+
+        var subject = "BeTendly debug email";
+        var body = "If you see this, Azure Communication Email works in Azure App Service.";
+
+        var message = new EmailMessage(
+            senderAddress: "DoNotReply@9ad31b68-e067-4e3f-a51b-5f14a0366fad.azurecomm.net", 
+            content: new EmailContent(subject)
+            {
+                PlainText = body
+            },
+            recipients: new EmailRecipients(new[]
+            {
+                new EmailAddress(to)
+            })
+        );
+
+        var operation = await emailClient.SendAsync(
+            Azure.WaitUntil.Completed,
+            message
+        );
+
+        return Results.Ok(new
+        {
+            status = "ok",
+            operationId = operation.Id
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            title: ex.GetType().FullName,
+            detail: ex.Message,
+            statusCode: 500
+        );
+    }
 });
+
 
 app.UseHttpsRedirection();
 app.UseRouting();
