@@ -6,15 +6,12 @@ public class EmailService
     private readonly EmailClient _client;
     private readonly string _sender;
 
-    public EmailService(IConfiguration config)
+    public EmailService(EmailClient client, IConfiguration config)
     {
-        var connectionString = config["Email:ConnectionString"]
-            ?? throw new InvalidOperationException("Email:ConnectionString is not configured");
+        _client = client ?? throw new ArgumentNullException(nameof(client));
 
         _sender = config["Email:SenderAddress"]
             ?? throw new InvalidOperationException("Email:SenderAddress is not configured");
-
-        _client = new EmailClient(connectionString);
     }
 
     public async Task SendResetPasswordEmailAsync(string toEmail, string resetLink)
@@ -35,11 +32,12 @@ public class EmailService
         try
         {
             var operation = await _client.SendAsync(
-                wait: Azure.WaitUntil.Completed,
+                wait: WaitUntil.Completed,
                 senderAddress: _sender,
                 recipientAddress: toEmail,
                 subject: subject,
                 htmlContent: htmlBody);
+
         }
         catch (RequestFailedException ex)
         {
