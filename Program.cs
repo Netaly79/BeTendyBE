@@ -20,6 +20,7 @@ using Swashbuckle.AspNetCore.Filters;
 using System.Text.Json;
 using Azure.Communication.Email;
 using Azure;
+using Microsoft.AspNetCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -217,26 +218,39 @@ if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 }
 
 
-/* app.UseExceptionHandler(errorApp =>
+app.UseExceptionHandler(errorApp =>
 {
-  errorApp.Run(async context =>
-          {
-            var exceptionHandler = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
-            var ex = exceptionHandler?.Error;
+    errorApp.Run(async context =>
+    {
+        var feature = context.Features.Get<IExceptionHandlerFeature>();
 
-            var problem = new ProblemDetails
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+
+        if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+        {
+            // В DEV/STAGING показываем реальную ошибку
+            await context.Response.WriteAsJsonAsync(new
             {
-              Type = "https://api.betendy.example/errors/unexpected",
-              Title = "unexpected_error",
-              Detail = app.Environment.IsDevelopment() ? ex?.ToString() : "Unexpected error.",
-              Status = StatusCodes.Status500InternalServerError
-            };
-
-            context.Response.ContentType = "application/json";
-            context.Response.StatusCode = problem.Status ?? 500;
-            await context.Response.WriteAsJsonAsync(problem);
-          });
-}); */
+                type = "error",
+                title = feature?.Error.GetType().Name,
+                detail = feature?.Error.Message,
+                stack = feature?.Error.StackTrace
+            });
+        }
+        else
+        {
+            // В PROD скрываем детали
+            await context.Response.WriteAsJsonAsync(new
+            {
+                type = "https://api.betendy.example/errors/unexpected",
+                title = "unexpected_error",
+                status = 500,
+                detail = "Unexpected error."
+            });
+        }
+    });
+});
 
 app.MapGet("/debug/email-config", (IConfiguration config) =>
 {
