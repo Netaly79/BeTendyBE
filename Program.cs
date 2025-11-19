@@ -118,6 +118,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<UpsertMasterProfileValidato
 builder.Services.AddScoped<IMasterService, MasterService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddHostedService<DailyBookingCleanupService>();
+builder.Services.AddScoped<EmailService>();
 
 builder.Services.AddSwaggerGen(c =>
 {
