@@ -217,7 +217,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 }
 
 
-app.UseExceptionHandler(errorApp =>
+/* app.UseExceptionHandler(errorApp =>
 {
   errorApp.Run(async context =>
           {
@@ -236,7 +236,7 @@ app.UseExceptionHandler(errorApp =>
             context.Response.StatusCode = problem.Status ?? 500;
             await context.Response.WriteAsJsonAsync(problem);
           });
-});
+}); */
 
 app.MapGet("/debug/email-config", (IConfiguration config) =>
 {
