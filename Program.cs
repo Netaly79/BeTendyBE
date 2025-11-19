@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Swashbuckle.AspNetCore.Filters;
 using System.Text.Json;
 using Azure.Communication.Email;
+using Azure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -291,26 +292,41 @@ app.MapPost("/debug/email-test", async (EmailClient emailClient) =>
   }
 });
 
-app.MapGet("/debug/email-conn-info", (IConfiguration config) =>
+
+
+app.MapPost("/debug/email-test-raw", async (EmailClient emailClient) =>
 {
-    var value = config["AzureCommunication:ConnectionString"];
-
-    if (string.IsNullOrWhiteSpace(value))
+    try
     {
-        return Results.Ok(new
-        {
-            hasValue = false
-        });
+        var to = "netaly79@gmail.com";
+
+        var message = new EmailMessage(
+            senderAddress: "DoNotReply@9ad31b68-e067-4e3f-a51b-5f14a0366fad.azurecomm.net",
+            content: new EmailContent("BeTendly debug email")
+            {
+                PlainText = "If you see this, Azure Communication Email works in Azure App Service."
+            },
+            recipients: new EmailRecipients(new[]
+            {
+                new EmailAddress(to)
+            })
+        );
+
+        var operation = await emailClient.SendAsync(WaitUntil.Completed, message);
+
+        return Results.Text(
+            $"OK\nOperationId: {operation.Id}",
+            "text/plain"
+        );
     }
-
-    return Results.Ok(new
+    catch (Exception ex)
     {
-        hasValue = true,
-        length = value.Length,
-        // Покажем только кусочки, чтобы не светить ключ
-        start = value.Substring(0, Math.Min(20, value.Length)),
-        end = value.Substring(Math.Max(0, value.Length - 10))
-    });
+        // ВАЖНО: возвращаем как plain text, не кидаем дальше
+        return Results.Text(
+            ex.ToString(),
+            "text/plain"
+        );
+    }
 });
 
 
