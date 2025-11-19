@@ -250,45 +250,67 @@ app.MapGet("/debug/email-config", (IConfiguration config) =>
 
 app.MapPost("/debug/email-test", async (EmailClient emailClient) =>
 {
-    try
-    {
-        // подставь СВОЙ адрес почты, на который можно послать тест
-        var to = "netaly79@gmail.com";
+  try
+  {
+    // подставь СВОЙ адрес почты, на который можно послать тест
+    var to = "netaly79@gmail.com";
 
-        var subject = "BeTendly debug email";
-        var body = "If you see this, Azure Communication Email works in Azure App Service.";
+    var subject = "BeTendly debug email";
+    var body = "If you see this, Azure Communication Email works in Azure App Service.";
 
-        var message = new EmailMessage(
-            senderAddress: "DoNotReply@9ad31b68-e067-4e3f-a51b-5f14a0366fad.azurecomm.net", 
-            content: new EmailContent(subject)
-            {
-                PlainText = body
-            },
-            recipients: new EmailRecipients(new[]
-            {
+    var message = new EmailMessage(
+        senderAddress: "DoNotReply@9ad31b68-e067-4e3f-a51b-5f14a0366fad.azurecomm.net",
+        content: new EmailContent(subject)
+        {
+          PlainText = body
+        },
+        recipients: new EmailRecipients(new[]
+        {
                 new EmailAddress(to)
-            })
-        );
+        })
+    );
 
-        var operation = await emailClient.SendAsync(
-            Azure.WaitUntil.Completed,
-            message
-        );
+    var operation = await emailClient.SendAsync(
+        Azure.WaitUntil.Completed,
+        message
+    );
 
+    return Results.Ok(new
+    {
+      status = "ok",
+      operationId = operation.Id
+    });
+  }
+  catch (Exception ex)
+  {
+    return Results.Problem(
+        title: ex.GetType().FullName,
+        detail: ex.Message,
+        statusCode: 500
+    );
+  }
+});
+
+app.MapGet("/debug/email-conn-info", (IConfiguration config) =>
+{
+    var value = config["AzureCommunication:ConnectionString"];
+
+    if (string.IsNullOrWhiteSpace(value))
+    {
         return Results.Ok(new
         {
-            status = "ok",
-            operationId = operation.Id
+            hasValue = false
         });
     }
-    catch (Exception ex)
+
+    return Results.Ok(new
     {
-        return Results.Problem(
-            title: ex.GetType().FullName,
-            detail: ex.Message,
-            statusCode: 500
-        );
-    }
+        hasValue = true,
+        length = value.Length,
+        // Покажем только кусочки, чтобы не светить ключ
+        start = value.Substring(0, Math.Min(20, value.Length)),
+        end = value.Substring(Math.Max(0, value.Length - 10))
+    });
 });
 
 
