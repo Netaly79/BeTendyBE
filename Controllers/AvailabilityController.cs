@@ -24,6 +24,7 @@ public class AvailabilityController : ControllerBase
   /// </remarks>
   /// <param name="db">Контекст бази даних.</param>
   /// <param name="masterId">Ідентифікатор майстра (query: <c>master_id</c>).</param>
+  /// <param name="serviceId">Ідентифікатор послуги (query: <c>service_id</c>).</param>
   /// <param name="date">Дата у форматі <c>YYYY-MM-DD</c> (UTC).</param>
   /// <param name="ct"></param>
   /// <response code="200">Повернуто список вільних слотів.</response>
@@ -32,19 +33,39 @@ public class AvailabilityController : ControllerBase
   [ProducesResponseType(typeof(IEnumerable<SlotResponse>), StatusCodes.Status200OK)]
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
   public async Task<ActionResult<IEnumerable<SlotResponse>>> GetFreeSlotsForDay(
-      [FromServices] AppDbContext db,
-      [FromQuery(Name = "master_id")] Guid? masterId,
-      [FromQuery] DateOnly? date,
-      CancellationToken ct)
+    [FromServices] AppDbContext db,
+    [FromQuery(Name = "master_id")] Guid? masterId,
+    [FromQuery(Name = "service_id")] Guid? serviceId,
+    [FromQuery] DateOnly? date,
+    CancellationToken ct)
   {
     if (!masterId.HasValue || masterId.Value == Guid.Empty)
       return BadRequest(new { message = "Parameter 'master_id' is required." });
+
+    if (!serviceId.HasValue || serviceId.Value == Guid.Empty)
+      return BadRequest(new { message = "Parameter 'service_id' is required." });
 
     if (date is null)
       return BadRequest(new { message = "Parameter 'date' is required (format: YYYY-MM-DD)." });
 
     var day = date.Value;
 
+    // 1. Берём длительность услуги
+    var serviceInfo = await db.Services
+        .AsNoTracking()
+        .Where(s => s.Id == serviceId.Value /* можно ещё проверить, что это услуга именно этого мастера */)
+        .Select(s => new { s.DurationMinutes })
+        .SingleOrDefaultAsync(ct);
+
+    if (serviceInfo is null)
+      return BadRequest(new { message = "Service not found for given 'service_id'." });
+
+    if (serviceInfo.DurationMinutes <= 0)
+      return BadRequest(new { message = "Service duration must be greater than zero." });
+
+    var serviceDuration = TimeSpan.FromMinutes(serviceInfo.DurationMinutes);
+
+    // 2. Рабочий день мастера (по Киеву)
     var kyiv = TimeZoneInfo.FindSystemTimeZoneById("Europe/Kyiv");
 
     var localStart = day.ToDateTime(new TimeOnly(9, 0), DateTimeKind.Unspecified);
@@ -55,10 +76,12 @@ public class AvailabilityController : ControllerBase
 
     var nowUtc = DateTime.UtcNow;
 
+    // 3. Берём занятые брони (Pending/Confirmed + не истёкший hold, если он есть)
     var busyBookings = await db.Bookings
         .AsNoTracking()
         .Where(b => b.MasterId == masterId.Value
                     && (b.Status == BookingStatus.Pending || b.Status == BookingStatus.Confirmed)
+                    && (b.HoldExpiresUtc == null || b.HoldExpiresUtc > nowUtc)
                     && !(b.EndUtc <= dayStartUtc || b.StartUtc >= dayEndUtc))
         .Select(b => new { b.StartUtc, b.EndUtc })
         .ToListAsync(ct);
@@ -66,11 +89,18 @@ public class AvailabilityController : ControllerBase
     var freeSlots = new List<SlotResponse>();
     var current = dayStartUtc;
 
+    // 4. Идём по сетке каждые 30 минут, но считаем конец слота по длительности услуги
     while (current < dayEndUtc)
     {
       var slotStart = current;
-      var slotEnd = current.AddMinutes(30);
+      var slotEnd = slotStart + serviceDuration; // <- вот тут магия
 
+      // Если услуга не успевает до конца рабочего дня — дальше смысла нет
+      if (slotEnd > dayEndUtc)
+        break;
+
+      // Проверка пересечения с существующими бронями:
+      // пересекается, если не выполняется условие "полностью до" или "полностью после"
       var overlaps = busyBookings.Any(b =>
           !(slotEnd <= b.StartUtc || slotStart >= b.EndUtc));
 
@@ -80,7 +110,8 @@ public class AvailabilityController : ControllerBase
         freeSlots.Add(new SlotResponse(slotStart, slotEnd, isPast));
       }
 
-      current = slotEnd;
+      // Шаг сетки — 30 минут (можно вынести в конфиг)
+      current = current.AddMinutes(30);
     }
 
     return Ok(freeSlots);

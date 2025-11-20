@@ -19,4 +19,6 @@ public class Booking
 
     public Master Master { get; set; } = default!;
     public User? Client { get; set; }
+
+    public Service Service { get; set; } = default!;
 }
