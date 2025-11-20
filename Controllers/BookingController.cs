@@ -67,7 +67,7 @@ public class BookingController : ControllerBase
     {
         var entity = await db.Bookings.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
         if (entity is null) return NotFound();
-        return Ok(new BookingResponse(entity.Id, entity.MasterId, entity.ClientId, entity.ServiceId,
+        return Ok(new BookingResponse(entity.Id, entity.Master.User.FirstName + " " + entity.Master.User.LastName, entity.Client.FirstName + " " + entity.Client.LastName, entity.Service.Name,
             entity.Status, entity.StartUtc, entity.EndUtc, entity.CreatedAtUtc, entity.HoldExpiresUtc));
     }
 
@@ -250,9 +250,9 @@ public class BookingController : ControllerBase
             .OrderBy(b => b.StartUtc)
             .Select(b => new BookingResponse(
                 b.Id,
-                b.MasterId,
-                b.ClientId,
-                b.ServiceId,
+                b.Master.User.FirstName + " " + b.Master.User.LastName,
+                b.Client.FirstName + " " + b.Client.LastName,
+                b.Service.Name,
                 b.Status,
                 b.StartUtc,
                 b.EndUtc,
