@@ -123,12 +123,6 @@ public class MasterController : ControllerBase
 
         var total = await mastersQ.CountAsync();
 
-        // Сортировка (можешь поменять порядок — тут рейтинг ↓, затем id ↑)
-        // mastersQ = mastersQ
-        //     .OrderByDescending(m => m.Rating)
-        //     .ThenBy(m => m.Id);
-
-
         var pageItemsRaw = await mastersQ
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -141,8 +135,7 @@ public class MasterController : ControllerBase
                 m.About,
                 m.Skills,
                 m.Address,
-                // m.Rating,
-                // m.ReviewsCount,
+                m.City,
                 m.User.AvatarUrl
             })
             .ToListAsync();
@@ -160,12 +153,9 @@ public class MasterController : ControllerBase
             About = m.About,
             Skills = (m.Skills ?? new List<string>()).Where(s => !string.IsNullOrWhiteSpace(s)).ToList(),
             Address = string.IsNullOrWhiteSpace(m.Address) ? null : m.Address,
-            // Rating = m.Rating,
-            // ReviewsCount = m.ReviewsCount,
+            City = string.IsNullOrWhiteSpace(m.City) ? null : m.City,
             AvatarUrl = m.AvatarUrl
         })
-
-        //.Where(x => x.Skills.Count > 0)
         .ToList();
 
         var response = new PagedResponse<MasterResponse>

@@ -67,6 +67,7 @@ public sealed class ProfileController : ControllerBase
                     u.Master.Skills,
                     u.Master.ExperienceYears,
                     u.Master.Address,
+                    u.Master.City,
                     null
                 )
         ),
@@ -135,8 +136,6 @@ public sealed class ProfileController : ControllerBase
     var res = _hasher.VerifyHashedPassword(u, u.PasswordHash, req.CurrentPassword);
     if (res == PasswordVerificationResult.Failed)
     {
-      // Варіант A: кинуть виняток і перехопити глобальним middleware => 422
-      // Варіант B: повернути ProblemDetails тут же (більш явний Swagger-приклад):
       return UnprocessableEntity(new ProblemDetails
       {
         Type = "https://httpstatuses.io/422",
@@ -145,8 +144,6 @@ public sealed class ProfileController : ControllerBase
         Detail = "The provided current password does not match.",
         Instance = HttpContext?.Request?.Path.Value
       });
-      // або, якщо волієш виключення:
-      // throw new AuthenticationException("Current password is invalid.");
     }
 
     u.PasswordHash = _hasher.HashPassword(u, req.NewPassword);
@@ -158,7 +155,7 @@ public sealed class ProfileController : ControllerBase
   private static IQueryable<ProfileResponse> BuildProfileQuery(AppDbContext db, Guid userId)
         => db.Users
             .AsNoTracking()
-            .Where(u => u.Id == userId /* && !u.IsDeleted && !u.IsBanned */)
+            .Where(u => u.Id == userId)
             .Select(u => new ProfileResponse(
                 u.Id,
                 (u.Email ?? string.Empty).Trim(),
@@ -174,6 +171,7 @@ public sealed class ProfileController : ControllerBase
                         u.Master.Skills,
                         u.Master.ExperienceYears,
                         u.Master.Address,
+                        u.Master.City,
                         null
                     )
             ));
@@ -192,24 +190,20 @@ public sealed class ProfileController : ControllerBase
       [FromBody] MemberUpdateRequest body,
       CancellationToken ct)
   {
-    // 1) Авторизация
     Guid currentUserId;
     try { currentUserId = User.GetUserId(); }
     catch { return Unauthorized(); }
 
-    // 2) Быстрая валидация: есть ли вообще что обновлять?
     var hasUser = body?.User is not null;
     var hasMaster = body?.Master is not null;
     if (!hasUser && !hasMaster)
       return BadRequest("Nothing to update.");
 
-    // 3) Загружаем пользователя (трекинг нужен для обновления)
     var user = await _db.Users
         .FirstOrDefaultAsync(u => u.Id == currentUserId, ct);
 
     if (user is null) return NotFound();
 
-    // 4) Применяем частичные изменения к User
     if (hasUser)
     {
       var u = body!.User!;
@@ -218,10 +212,8 @@ public sealed class ProfileController : ControllerBase
       if (u.Phone is not null) user.Phone = u.Phone.Trim();
     }
 
-    // 5) Применяем частичные изменения к Master (если присланы)
     if (hasMaster)
     {
-      // Находим мастер-профиль этого пользователя по userId
       var master = await _db.Masters.FirstOrDefaultAsync(m => m.UserId == currentUserId, ct);
       if (master is null)
         return BadRequest("User is not a master.");
@@ -229,19 +221,17 @@ public sealed class ProfileController : ControllerBase
       var m = body!.Master!;
       if (m.About is not null) master.About = string.IsNullOrWhiteSpace(m.About) ? null : m.About.Trim();
       if (m.Address is not null) master.Address = string.IsNullOrWhiteSpace(m.Address) ? null : m.Address.Trim();
+      if (m.City is not null) master.City = string.IsNullOrWhiteSpace(m.City) ? null : m.City.Trim();
       if (m.ExperienceYears is not null) master.ExperienceYears = m.ExperienceYears;
       if (m.Skills is not null) master.Skills = m.Skills;
       master.UpdatedAtUtc = DateTime.UtcNow;
     }
 
-    // 6) Сохраняем изменения
     await _db.SaveChangesAsync(ct);
 
-    // 7) Возвращаем свежий профиль (тем же контрактом, что в GET /profile)
     var dto = await BuildProfileQuery(_db, currentUserId).FirstOrDefaultAsync(ct);
     if (dto is null) return NotFound(); // маловероятно
 
-    // Нормализация коллекций: фронту удобнее [] вместо null
     if (dto.Master is not null && dto.Master.Skills is null)
       dto = dto with { Master = dto.Master with { Skills = [] } };
 

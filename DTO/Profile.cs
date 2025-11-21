@@ -18,7 +18,7 @@ public record UpdateClientProfileRequest(string FirstName, string LastName, stri
 public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 
 // master DTO block
-public record MasterProfileResponse(string? About, List<string> Skills, int? ExperienceYears, string? Address = null, List<ServiceListItemResponse>? Services = null);
+public record MasterProfileResponse(string? About, List<string> Skills, int? ExperienceYears, string? Address = null, string? City = null, List<ServiceListItemResponse>? Services = null);
 public record UpsertMasterProfileRequest(string? About, List<string> Skills, int? ExperienceYears, string? Address = null);
 
 
@@ -32,14 +32,15 @@ public static class ClientProfileMapping
                 u.Master.Skills,
                 u.Master.ExperienceYears,
                 u.Master.Address,
+                u.Master.City,
                 u.Master.Services
                     .OrderBy(s => s.Name)
                     .Select(s => new ServiceListItemResponse
                     {
-                      Name = s.Name,
-                      Price = s.Price,
-                      DurationMinutes = s.DurationMinutes,
-                      Description = s.Description,
+                        Name = s.Name,
+                        Price = s.Price,
+                        DurationMinutes = s.DurationMinutes,
+                        Description = s.Description,
                     })
                     .ToList()
 

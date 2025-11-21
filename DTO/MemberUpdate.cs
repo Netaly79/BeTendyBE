@@ -17,5 +17,6 @@ public sealed class MasterUpdateDto
     public string? About            { get; set; }
     public List<string>? Skills     { get; set; }
     public int? ExperienceYears     { get; set; }
-    public string? Address          { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
 }
