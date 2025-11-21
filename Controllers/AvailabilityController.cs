@@ -50,10 +50,9 @@ public class AvailabilityController : ControllerBase
 
     var day = date.Value;
 
-    // 1. Берём длительность услуги
     var serviceInfo = await db.Services
         .AsNoTracking()
-        .Where(s => s.Id == serviceId.Value /* можно ещё проверить, что это услуга именно этого мастера */)
+        .Where(s => s.Id == serviceId.Value)
         .Select(s => new { s.DurationMinutes })
         .SingleOrDefaultAsync(ct);
 
@@ -65,7 +64,6 @@ public class AvailabilityController : ControllerBase
 
     var serviceDuration = TimeSpan.FromMinutes(serviceInfo.DurationMinutes);
 
-    // 2. Рабочий день мастера (по Киеву)
     var kyiv = TimeZoneInfo.FindSystemTimeZoneById("Europe/Kyiv");
 
     var localStart = day.ToDateTime(new TimeOnly(9, 0), DateTimeKind.Unspecified);
@@ -76,7 +74,6 @@ public class AvailabilityController : ControllerBase
 
     var nowUtc = DateTime.UtcNow;
 
-    // 3. Берём занятые брони (Pending/Confirmed + не истёкший hold, если он есть)
     var busyBookings = await db.Bookings
         .AsNoTracking()
         .Where(b => b.MasterId == masterId.Value
@@ -89,18 +86,14 @@ public class AvailabilityController : ControllerBase
     var freeSlots = new List<SlotResponse>();
     var current = dayStartUtc;
 
-    // 4. Идём по сетке каждые 30 минут, но считаем конец слота по длительности услуги
     while (current < dayEndUtc)
     {
       var slotStart = current;
-      var slotEnd = slotStart + serviceDuration; // <- вот тут магия
+      var slotEnd = slotStart + serviceDuration;
 
-      // Если услуга не успевает до конца рабочего дня — дальше смысла нет
       if (slotEnd > dayEndUtc)
         break;
 
-      // Проверка пересечения с существующими бронями:
-      // пересекается, если не выполняется условие "полностью до" или "полностью после"
       var overlaps = busyBookings.Any(b =>
           !(slotEnd <= b.StartUtc || slotStart >= b.EndUtc));
 
@@ -110,7 +103,6 @@ public class AvailabilityController : ControllerBase
         freeSlots.Add(new SlotResponse(slotStart, slotEnd, isPast));
       }
 
-      // Шаг сетки — 30 минут (можно вынести в конфиг)
       current = current.AddMinutes(30);
     }
 

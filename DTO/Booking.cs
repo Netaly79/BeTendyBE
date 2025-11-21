@@ -10,6 +10,9 @@ public record CreateBookingRequest(
 
 public record BookingResponse(
     Guid Id,
+    Guid MasterId,
+    Guid ClientId,
+    Guid ServiceId,
     string MasterName,
     string ClientName,
     string ServiceName,
