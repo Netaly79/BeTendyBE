@@ -36,6 +36,7 @@ public class BookingController : ControllerBase
     /// <response code="409">Бронювання з таким <c>idempotencyKey</c> уже існує.</response>
     /// <response code="500">Внутрішня помилка сервера.</response>
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -67,7 +68,7 @@ public class BookingController : ControllerBase
     {
         var entity = await db.Bookings.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
         if (entity is null) return NotFound();
-        return Ok(new BookingResponse(entity.Id, entity.Master.User.FirstName + " " + entity.Master.User.LastName, entity.Client.FirstName + " " + entity.Client.LastName, entity.Service.Name,
+        return Ok(new BookingResponse(entity.Id, entity.MasterId, entity.ClientId, entity.ServiceId, entity.Master.User.FirstName + " " + entity.Master.User.LastName, entity.Client.FirstName + " " + entity.Client.LastName, entity.Service.Name,
             entity.Status, entity.StartUtc, entity.EndUtc, entity.CreatedAtUtc, entity.HoldExpiresUtc));
     }
 
@@ -153,7 +154,6 @@ public class BookingController : ControllerBase
         if (booking.Status != BookingStatus.Pending)
             return BadRequest("Only pending bookings can be confirmed.");
 
-        // Проверяем пересечения (тот же код, что в create)
         var hasOverlap = await db.Bookings.AnyAsync(b =>
             b.MasterId == masterId &&
             b.Status == BookingStatus.Confirmed &&
@@ -211,7 +211,6 @@ public class BookingController : ControllerBase
 
         var nowUtc = DateTime.UtcNow;
 
-        // диапазон дат
         var hasFrom = fromUtc.HasValue;
         var hasTo = toUtc.HasValue;
 
@@ -250,6 +249,9 @@ public class BookingController : ControllerBase
             .OrderBy(b => b.StartUtc)
             .Select(b => new BookingResponse(
                 b.Id,
+                b.MasterId,
+                b.ClientId,
+                b.ServiceId,
                 b.Master.User.FirstName + " " + b.Master.User.LastName,
                 b.Client.FirstName + " " + b.Client.LastName,
                 b.Service.Name,
