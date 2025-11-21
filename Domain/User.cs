@@ -34,10 +34,7 @@ namespace BeTendyBE.Domain
         public List<string> Skills { get; set; } = new();
         public int? ExperienceYears { get; set; }
         public string? Address { get; set; }
-
-        // public double? Rating { get; set; }
-        // public int ReviewsCount { get; set; }
-
+        public string? City { get; set; }
         public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 

@@ -230,7 +230,6 @@ app.UseExceptionHandler(errorApp =>
 
         if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
         {
-            // В DEV/STAGING показываем реальную ошибку
             await context.Response.WriteAsJsonAsync(new
             {
                 type = "error",
@@ -241,7 +240,6 @@ app.UseExceptionHandler(errorApp =>
         }
         else
         {
-            // В PROD скрываем детали
             await context.Response.WriteAsJsonAsync(new
             {
                 type = "https://api.betendy.example/errors/unexpected",
@@ -253,98 +251,6 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
-app.MapGet("/debug/email-config", (IConfiguration config) =>
-{
-  var value = config["AzureCommunication:ConnectionString"];
-  return new
-  {
-    hasValue = !string.IsNullOrWhiteSpace(value),
-    length = value?.Length ?? 0
-    // сам connection string не показываем!
-  };
-});
-
-app.MapPost("/debug/email-test", async (EmailClient emailClient) =>
-{
-  try
-  {
-    // подставь СВОЙ адрес почты, на который можно послать тест
-    var to = "netaly79@gmail.com";
-
-    var subject = "BeTendly debug email";
-    var body = "If you see this, Azure Communication Email works in Azure App Service.";
-
-    var message = new EmailMessage(
-        senderAddress: "DoNotReply@9ad31b68-e067-4e3f-a51b-5f14a0366fad.azurecomm.net",
-        content: new EmailContent(subject)
-        {
-          PlainText = body
-        },
-        recipients: new EmailRecipients(new[]
-        {
-                new EmailAddress(to)
-        })
-    );
-
-    var operation = await emailClient.SendAsync(
-        Azure.WaitUntil.Completed,
-        message
-    );
-
-    return Results.Ok(new
-    {
-      status = "ok",
-      operationId = operation.Id
-    });
-  }
-  catch (Exception ex)
-  {
-    return Results.Problem(
-        title: ex.GetType().FullName,
-        detail: ex.Message,
-        statusCode: 500
-    );
-  }
-});
-
-
-
-app.MapPost("/debug/email-test-raw", async (EmailClient emailClient) =>
-{
-    try
-    {
-        var to = "netaly79@gmail.com";
-
-        var message = new EmailMessage(
-            senderAddress: "DoNotReply@9ad31b68-e067-4e3f-a51b-5f14a0366fad.azurecomm.net",
-            content: new EmailContent("BeTendly debug email")
-            {
-                PlainText = "If you see this, Azure Communication Email works in Azure App Service."
-            },
-            recipients: new EmailRecipients(new[]
-            {
-                new EmailAddress(to)
-            })
-        );
-
-        var operation = await emailClient.SendAsync(WaitUntil.Completed, message);
-
-        return Results.Text(
-            $"OK\nOperationId: {operation.Id}",
-            "text/plain"
-        );
-    }
-    catch (Exception ex)
-    {
-        // ВАЖНО: возвращаем как plain text, не кидаем дальше
-        return Results.Text(
-            ex.ToString(),
-            "text/plain"
-        );
-    }
-});
-
-
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors("AppCors");
@@ -354,7 +260,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
 
 static string? FirstNonEmpty(params string?[] vals)
     => vals.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
