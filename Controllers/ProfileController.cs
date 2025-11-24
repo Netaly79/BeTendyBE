@@ -42,7 +42,6 @@ public sealed class ProfileController : ControllerBase
   /// <response code="404">Користувача не знайдено.</response>
   [HttpGet("{id:guid?}")]
   [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
-  [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
   public async Task<ActionResult<ProfileResponse>> Me(Guid? id, CancellationToken ct)
   {
@@ -139,9 +138,9 @@ public sealed class ProfileController : ControllerBase
       return UnprocessableEntity(new ProblemDetails
       {
         Type = "https://httpstatuses.io/422",
-        Title = "Current password is invalid",
+        Title = "Поточний пароль недійсний",
         Status = StatusCodes.Status422UnprocessableEntity,
-        Detail = "The provided current password does not match.",
+        Detail = "Вказаний поточний пароль не збігається зі збереженим в системі.",
         Instance = HttpContext?.Request?.Path.Value
       });
     }

@@ -100,7 +100,6 @@ public sealed class ServicesController : ControllerBase
     [SwaggerResponseExample(200, typeof(ServiceResponse200Example))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<Service>> GetById(Guid id, CancellationToken ct)
     {
         var service = await _db.Services.FindAsync(new object[] { id }, ct);

@@ -130,7 +130,7 @@ public sealed class AuthController : ControllerBase
         Type = "https://httpstatuses.io/401",
         Title = "Invalid credentials",
         Status = StatusCodes.Status401Unauthorized,
-        Detail = "Invalid email or password.",
+        Detail = "Невірний логін або пароль.",
         Instance = HttpContext?.Request?.Path.Value
       });
     }

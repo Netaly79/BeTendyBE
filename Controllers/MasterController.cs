@@ -115,10 +115,10 @@ public class MasterController : ControllerBase
             mastersQ = mastersQ.Where(m => m.Skills != null && m.Skills.Contains(query.Skill));
         }
 
-        if (!string.IsNullOrEmpty(query.Address))
+        if (!string.IsNullOrEmpty(query.City))
         {
-            mastersQ = mastersQ.Where(m => m.Address != null &&
-                                           EF.Functions.ILike(m.Address, $"%{query.Address}%"));
+            mastersQ = mastersQ.Where(m => m.City != null &&
+                                           EF.Functions.ILike(m.City, $"%{query.City}%"));
         }
 
         var total = await mastersQ.CountAsync();
