@@ -85,7 +85,7 @@ public class BookingService : IBookingService
       EndUtc = endUtc,
       HoldExpiresUtc = nowUtc.AddDays(1),
       IdempotencyKey = req.IdempotencyKey,
-      CreatedAtUtc = nowUtc
+      CreatedAtUtc = DateTime.UtcNow
     };
 
     _db.Bookings.Add(entity);

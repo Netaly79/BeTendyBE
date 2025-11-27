@@ -41,9 +41,9 @@ namespace BeTendyBE.Migrations
                         .HasColumnType("character varying(300)")
                         .HasColumnName("skills");
 
-                    b.Property<int?>("YearsExperience")
+                    b.Property<int?>("experienceYears")
                         .HasColumnType("integer")
-                        .HasColumnName("years_experience");
+                        .HasColumnName("experience_years");
 
                     b.HasKey("UserId")
                         .HasName("pk_master_profile");
