@@ -242,7 +242,7 @@ app.UseExceptionHandler(errorApp =>
         {
             await context.Response.WriteAsJsonAsync(new
             {
-                type = "https://api.betendy.example/errors/unexpected",
+                type = "https://api.betendly.example/errors/unexpected",
                 title = "unexpected_error",
                 status = 500,
                 detail = "Unexpected error."

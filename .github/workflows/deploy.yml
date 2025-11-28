@@ -1,4 +1,4 @@
-name: Deploy BeTendyBE API to Azure App Service
+name: Deploy BeTendlyBE API to Azure App Service
 
 on:
   push:
