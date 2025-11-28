@@ -1,6 +1,6 @@
 using Swashbuckle.AspNetCore.Filters;
 
-namespace BeTendyBE.DTO;
+namespace BeTendlyBE.DTO;
 
 public sealed class UpdateServiceRequest
 {

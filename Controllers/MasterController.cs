@@ -3,14 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
 
-using BeTendyBE.Data;
-using BeTendyBE.Domain;
-using BeTendyBE.Infrastructure.Identity;
+using BeTendlyBE.Data;
+using BeTendlyBE.Domain;
+using BeTendlyBE.Infrastructure.Identity;
 using Swashbuckle.AspNetCore.Filters;
-using BeTendyBE.DTO;
-using BeTendyBE.Contracts;
+using BeTendlyBE.DTO;
+using BeTendlyBE.Contracts;
 
-namespace BeTendyBE.Controllers;
+namespace BeTendlyBE.Controllers;
 
 [ApiController]
 [Route("masters")]

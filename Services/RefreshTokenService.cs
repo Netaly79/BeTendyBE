@@ -5,8 +5,8 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using BeTendlyBE.Services;
-using BeTendyBE.Data;
-using BeTendyBE.Domain;
+using BeTendlyBE.Data;
+using BeTendlyBE.Domain;
 
 namespace BeTendlyBE.Services;
 

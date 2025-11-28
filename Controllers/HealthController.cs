@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace BeTendyBE.Controllers;
+namespace BeTendlyBE.Controllers;
 
 [ApiController]
 [Route("health")]

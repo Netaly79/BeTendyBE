@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace BeTendyBE.Migrations
+namespace BeTendlyBE.Migrations
 {
     /// <inheritdoc />
     public partial class AddUserPasswordHash : Migration

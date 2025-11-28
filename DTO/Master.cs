@@ -1,4 +1,4 @@
-namespace BeTendyBE.DTO;
+namespace BeTendlyBE.DTO;
 public sealed class MasterResponse
 {
   public Guid Id { get; init; }

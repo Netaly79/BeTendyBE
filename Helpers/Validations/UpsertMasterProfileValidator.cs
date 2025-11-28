@@ -1,7 +1,7 @@
 using FluentValidation;
-using BeTendyBE.Contracts;
+using BeTendlyBE.Contracts;
 
-namespace BeTendyBE.Helpers.Validation;
+namespace BeTendlyBE.Helpers.Validation;
 public sealed class UpsertMasterProfileValidator : AbstractValidator<UpsertMasterProfileRequest>
 {
     public UpsertMasterProfileValidator()

@@ -1,12 +1,12 @@
 using System.Net;
 using System.Security.Cryptography;
-using BeTendyBE.Data;
-using BeTendyBE.DTO;
+using BeTendlyBE.Data;
+using BeTendlyBE.DTO;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace BeTendyBE.Controllers;
+namespace BeTendlyBE.Controllers;
 
 [ApiController]
 [Route("auth/password")]

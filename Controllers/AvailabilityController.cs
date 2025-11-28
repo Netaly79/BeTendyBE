@@ -1,11 +1,10 @@
-using BeTendyBE.Contracts;
-using BeTendyBE.Data;
-using BeTendyBE.Domain;
+using BeTendlyBE.Contracts;
+using BeTendlyBE.Data;
+using BeTendlyBE.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace BeTendyBE.Controllers;
-
+namespace BeTendlyBE.Controllers;
 [ApiController]
 [Route("availability")]
 public class AvailabilityController : ControllerBase

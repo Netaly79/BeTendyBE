@@ -26,10 +26,10 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore
-        run: dotnet restore ./BeTendyBE.csproj
+        run: dotnet restore ./BeTendlyBE.csproj
 
       - name: Publish (Release)
-        run: dotnet publish ./BeTendyBE.csproj -c Release -o output
+        run: dotnet publish ./BeTendlyBE.csproj -c Release -o output
 
       - name: Zip package
         run: cd output && zip -r ../app.zip .

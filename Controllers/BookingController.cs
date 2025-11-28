@@ -1,12 +1,12 @@
 using BeTendlyBE.Services;
-using BeTendyBE.Data;
-using BeTendyBE.Domain;
-using BeTendyBE.Infrastructure.Identity;
+using BeTendlyBE.Data;
+using BeTendlyBE.Domain;
+using BeTendlyBE.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace BeTendyBE.Controllers;
+namespace BeTendlyBE.Controllers;
 
 [ApiController]
 [Route("bookings")]

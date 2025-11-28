@@ -1,4 +1,4 @@
-using BeTendyBE.Domain;
+using BeTendlyBE.Domain;
 
 public class RefreshToken
 {

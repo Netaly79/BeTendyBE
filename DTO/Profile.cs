@@ -1,6 +1,6 @@
-using BeTendyBE.Domain;
+using BeTendlyBE.Domain;
 
-namespace BeTendyBE.Contracts;
+namespace BeTendlyBE.Contracts;
 
 public record ProfileResponse(
     Guid Id,
