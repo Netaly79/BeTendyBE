@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace BeTendyBE.Migrations
+namespace BeTendlyBE.Migrations
 {
     /// <inheritdoc />
     public partial class AddRefreshTokens : Migration

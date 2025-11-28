@@ -1,4 +1,4 @@
-namespace BeTendyBE.Domain
+namespace BeTendlyBE.Domain
 {
     public class Service
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using BeTendyBE.Data;
+using BeTendlyBE.Data;
 
-namespace BeTendyBE.Controllers;
+namespace BeTendlyBE.Controllers;
 [ApiController]
 [Route("db")]
 public class DbController : ControllerBase

@@ -1,9 +1,9 @@
 using System.Security.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using BeTendyBE.Contracts;
-using BeTendyBE.Data;
-using BeTendyBE.Domain;
+using BeTendlyBE.Contracts;
+using BeTendlyBE.Data;
+using BeTendlyBE.Domain;
 
 namespace BeTendlyBE.Services
 {

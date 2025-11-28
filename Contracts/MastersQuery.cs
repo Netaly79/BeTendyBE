@@ -1,4 +1,4 @@
-namespace BeTendyBE.Contracts;
+namespace BeTendlyBE.Contracts;
 
 public sealed class MastersQuery
 {

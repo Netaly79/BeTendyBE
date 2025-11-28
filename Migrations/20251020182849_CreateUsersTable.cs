@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace BeTendyBE.Migrations
+namespace BeTendlyBE.Migrations
 {
     public partial class CreateUsersTable : Migration
     {

@@ -4,7 +4,7 @@
 #nullable disable
 
 
-namespace BeTendyBE.Migrations
+namespace BeTendlyBE.Migrations
 {
 public partial class AddMasterIndexes : Migration
 {

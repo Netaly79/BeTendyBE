@@ -3,7 +3,7 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
-using BeTendyBE.Domain;
+using BeTendlyBE.Domain;
 
 namespace BeTendlyBE.Services
 {

@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace BeTendyBE.Infrastructure.Identity;
+namespace BeTendlyBE.Infrastructure.Identity;
 
 public static class ClaimsPrincipalExt
 {

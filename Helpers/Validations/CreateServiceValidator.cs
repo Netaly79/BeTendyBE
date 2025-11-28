@@ -1,7 +1,7 @@
-using BeTendyBE.DTO;
+using BeTendlyBE.DTO;
 using FluentValidation;
 
-namespace BeTendyBE.Helpers.Validation;
+namespace BeTendlyBE.Helpers.Validation;
 
 public sealed class CreateServiceRequestValidator : AbstractValidator<CreateServiceRequest>
 {

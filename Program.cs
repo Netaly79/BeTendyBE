@@ -8,11 +8,11 @@ using Npgsql;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 
-using BeTendyBE.Helpers.Validation;
-using BeTendyBE.Helpers;
+using BeTendlyBE.Helpers.Validation;
+using BeTendlyBE.Helpers;
 using BeTendlyBE.Services;
-using BeTendyBE.Data;
-using BeTendyBE.Domain;
+using BeTendlyBE.Data;
+using BeTendlyBE.Domain;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
 using Microsoft.AspNetCore.HttpOverrides;

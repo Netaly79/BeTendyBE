@@ -1,5 +1,5 @@
 ﻿using System;
-using BeTendyBE.Data;
+using BeTendlyBE.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace BeTendyBE.Migrations
+namespace BeTendlyBE.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20251020182849_CreateUsersTable")]
@@ -23,7 +23,7 @@ namespace BeTendyBE.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("BeTendyBE.Domain.User", b =>
+            modelBuilder.Entity("BeTendlyBE.Domain.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()

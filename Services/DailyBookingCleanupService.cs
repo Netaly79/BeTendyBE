@@ -1,5 +1,5 @@
-using BeTendyBE.Data;
-using BeTendyBE.Domain;
+using BeTendlyBE.Data;
+using BeTendlyBE.Domain;
 using Microsoft.EntityFrameworkCore;
 
 public class DailyBookingCleanupService : BackgroundService
@@ -21,7 +21,6 @@ public class DailyBookingCleanupService : BackgroundService
         {
             try
             {
-                // вычисляем время до ближайших 03:00 (локального времени)
                 var now = DateTime.Now;
                 var nextRun = now.Date.AddHours(3);
                 if (nextRun <= now)
@@ -36,14 +35,12 @@ public class DailyBookingCleanupService : BackgroundService
             }
             catch (TaskCanceledException)
             {
-                // graceful shutdown
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Ошибка при выполнении очистки просроченных бронирований");
             }
 
-            // ждём сутки до следующего запуска
             await Task.Delay(TimeSpan.FromDays(1), stoppingToken);
         }
     }

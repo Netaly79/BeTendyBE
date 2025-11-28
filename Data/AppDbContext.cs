@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using BeTendyBE.Domain;
-using BeTendyBE.DTO;
+using BeTendlyBE.Domain;
+using BeTendlyBE.DTO;
 
-namespace BeTendyBE.Data;
+namespace BeTendlyBE.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
@@ -12,8 +12,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Service> Services => Set<Service>();
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = default!;
+  public object Clients { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder b)
+  protected override void OnModelCreating(ModelBuilder b)
     {
         // ----- User -----
         b.Entity<User>(e =>

@@ -1,14 +1,14 @@
-using BeTendyBE.Data;
-using BeTendyBE.Domain;
-using BeTendyBE.DTO;
-using BeTendyBE.Infrastructure.Identity;
+using BeTendlyBE.Data;
+using BeTendlyBE.Domain;
+using BeTendlyBE.DTO;
+using BeTendlyBE.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.Filters;
 
-namespace BeTendyBE.Controllers;
+namespace BeTendlyBE.Controllers;
 
 [ApiController]
 [Route("services")]

@@ -1,5 +1,5 @@
-using BeTendyBE.Data;
-using BeTendyBE.Domain;
+using BeTendlyBE.Data;
+using BeTendlyBE.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace BeTendlyBE.Services;

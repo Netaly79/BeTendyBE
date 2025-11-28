@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace BeTendyBE.Domain
+namespace BeTendlyBE.Domain
 {
 
     public class User

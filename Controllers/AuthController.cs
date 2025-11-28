@@ -6,12 +6,12 @@ using Swashbuckle.AspNetCore.Annotations;
 using System.Security.Claims;
 
 using BeTendlyBE.Services;
-using BeTendyBE.Data;
-using BeTendyBE.Domain;
-using BeTendyBE.DTO;
-using BeTendyBE.Infrastructure.Identity;
+using BeTendlyBE.Data;
+using BeTendlyBE.Domain;
+using BeTendlyBE.DTO;
+using BeTendlyBE.Infrastructure.Identity;
 
-namespace BeTendyBE.Controllers;
+namespace BeTendlyBE.Controllers;
 
 [ApiController]
 [Route("auth")]

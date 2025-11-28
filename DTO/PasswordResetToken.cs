@@ -1,6 +1,6 @@
-using BeTendyBE.Domain;
+using BeTendlyBE.Domain;
 
-namespace BeTendyBE.DTO;
+namespace BeTendlyBE.DTO;
 
 public class PasswordResetToken
 {
