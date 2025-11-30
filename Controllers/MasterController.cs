@@ -189,7 +189,6 @@ public class MasterController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<List<ServiceListItemResponse>>> GetMasterServices([FromRoute] Guid id)
     {
-        // 404, если мастер не существует
         var exists = await _db.Masters.AsNoTracking().AnyAsync(m => m.Id == id);
         if (!exists) return NotFound();
 

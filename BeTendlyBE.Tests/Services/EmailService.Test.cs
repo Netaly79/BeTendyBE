@@ -79,15 +79,15 @@ public class EmailServiceTests
         await service.SendResetPasswordEmailAsync(toEmail, resetLink);
 
         mockClient.Verify(c => c.SendAsync(
-                WaitUntil.Completed,     
-                senderAddress,                 
-                toEmail,                         
-                "Скидання паролю в BeTendly",      
-                It.Is<string>(body => 
-                    body.Contains(resetLink) &&    
-                    body.Contains("Вітаємо!")    
+                WaitUntil.Completed,
+                senderAddress,
+                toEmail,
+                "Скидання паролю в BeTendly",
+                It.Is<string>(body =>
+                    body.Contains(resetLink) &&
+                    body.Contains("Вітаємо!")
                 ),
-                It.IsAny<string>(),                  
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }

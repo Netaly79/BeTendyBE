@@ -95,9 +95,9 @@ public class ProfileServiceTests
 
         var req = new UpdateClientProfileRequest(
         FirstName: "  John  ",
-        LastName:  "  Doe  ",
-        Phone:     "  +380991112233  ");
-        
+        LastName: "  Doe  ",
+        Phone: "  +380991112233  ");
+
         // Act
         var result = await svc.UpdateAsync(userId, req, CancellationToken.None);
 
@@ -106,7 +106,7 @@ public class ProfileServiceTests
         Assert.Equal("Doe", result.LastName);
         Assert.Equal("+380991112233", result.Phone);
 
-      
+
         var dbUser = await db.Users.SingleAsync();
         Assert.Equal("John", dbUser.FirstName);
         Assert.Equal("Doe", dbUser.LastName);

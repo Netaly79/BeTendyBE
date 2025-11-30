@@ -2,6 +2,7 @@
 using BeTendlyBE.Data;
 
 namespace BeTendlyBE.Controllers;
+
 [ApiController]
 [Route("db")]
 public class DbController : ControllerBase

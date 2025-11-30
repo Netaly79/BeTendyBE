@@ -48,7 +48,6 @@ public sealed class AuthController : ControllerBase
   [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
   public async Task<IActionResult> Register([FromBody] RegisterRequest req, CancellationToken ct)
   {
-    // Базова нормалізація
     req.Email = (req.Email ?? string.Empty).Trim().ToLowerInvariant();
 
     if (await _db.Users.AnyAsync(u => u.Email == req.Email))

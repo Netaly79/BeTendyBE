@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace BeTendlyBE.Controllers;
+
 [ApiController]
 [Route("availability")]
 public class AvailabilityController : ControllerBase
@@ -35,7 +36,7 @@ public class AvailabilityController : ControllerBase
     [FromServices] AppDbContext db,
     [FromQuery(Name = "master_id")] Guid? masterId,
     [FromQuery(Name = "service_id")] Guid? serviceId,
-    [FromQuery] DateOnly? date,
+    [FromQuery] DateTimeOffset? date,
     CancellationToken ct)
   {
     if (!masterId.HasValue || masterId.Value == Guid.Empty)
@@ -45,9 +46,7 @@ public class AvailabilityController : ControllerBase
       return BadRequest(new { message = "Parameter 'service_id' is required." });
 
     if (date is null)
-      return BadRequest(new { message = "Parameter 'date' is required (format: YYYY-MM-DD)." });
-
-    var day = date.Value;
+      return BadRequest(new { message = "Parameter 'date' is required." });
 
     var serviceInfo = await db.Services
         .AsNoTracking()
@@ -64,6 +63,10 @@ public class AvailabilityController : ControllerBase
     var serviceDuration = TimeSpan.FromMinutes(serviceInfo.DurationMinutes);
 
     var kyiv = TimeZoneInfo.FindSystemTimeZoneById("Europe/Kyiv");
+    var utcInstant = date.Value.UtcDateTime;
+    var localKyiv = TimeZoneInfo.ConvertTimeFromUtc(utcInstant, kyiv);
+
+    var day = DateOnly.FromDateTime(localKyiv);
 
     var localStart = day.ToDateTime(new TimeOnly(9, 0), DateTimeKind.Unspecified);
     var localEnd = day.ToDateTime(new TimeOnly(17, 0), DateTimeKind.Unspecified);
