@@ -78,23 +78,23 @@ public sealed class ServicesController : ControllerBase
         });
     }
 
-  /// <summary>
-  /// Отримати послугу за ID
-  /// </summary>
-  /// <remarks>
-  /// Повертає інформацію про послугу, якщо вона існує.
-  /// </remarks>
-  /// <param name="id">ID послуги</param>
-  /// <param name="ct"></param>
-  /// <response code="200">Послугу знайдено та повернуто.</response>
-  /// <response code="404">Послугу не знайдено.</response>
-  /// <response code="401">Користувач неавторизований.</response>
-  /// <response code="403">У користувача немає доступу.</response>
-  [HttpGet("{id:guid}")]
+    /// <summary>
+    /// Отримати послугу за ID
+    /// </summary>
+    /// <remarks>
+    /// Повертає інформацію про послугу, якщо вона існує.
+    /// </remarks>
+    /// <param name="id">ID послуги</param>
+    /// <param name="ct"></param>
+    /// <response code="200">Послугу знайдено та повернуто.</response>
+    /// <response code="404">Послугу не знайдено.</response>
+    /// <response code="401">Користувач неавторизований.</response>
+    /// <response code="403">У користувача немає доступу.</response>
+    [HttpGet("{id:guid}")]
     [SwaggerOperation(
-        Summary = "Отримати послугу за ID",
-        Description = "Повертає детальну інформацію про послугу за вказаним ідентифікатором."
-    )]
+          Summary = "Отримати послугу за ID",
+          Description = "Повертає детальну інформацію про послугу за вказаним ідентифікатором."
+      )]
 
     [SwaggerResponse(200, "Successful get service", typeof(CreateServiceResponse))]
     [SwaggerResponseExample(200, typeof(ServiceResponse200Example))]
@@ -106,25 +106,25 @@ public sealed class ServicesController : ControllerBase
         return service is null ? NotFound() : Ok(service);
     }
 
-  /// <summary>
-  /// Оновити послугу (майстер)
-  /// </summary>
-  /// <remarks>
-  /// Потребує ролі <c>Master</c>. Оновлює поля та повертає оновлену послугу.
-  /// </remarks>
-  /// <param name="id">ID послуги</param>
-  /// <param name="req"></param>
-  /// <param name="ct"></param>
-  /// <response code="200">Послугу оновлено та повернуто.</response>
-  /// <response code="400">Помилка валідації вхідних даних.</response>
-  /// <response code="401">Користувач неавторизований.</response>
-  /// <response code="403">Немає доступу до цієї послуги.</response>
-  /// <response code="404">Послугу не знайдено.</response>
-  [HttpPut("{id:guid}")]
+    /// <summary>
+    /// Оновити послугу (майстер)
+    /// </summary>
+    /// <remarks>
+    /// Потребує ролі <c>Master</c>. Оновлює поля та повертає оновлену послугу.
+    /// </remarks>
+    /// <param name="id">ID послуги</param>
+    /// <param name="req"></param>
+    /// <param name="ct"></param>
+    /// <response code="200">Послугу оновлено та повернуто.</response>
+    /// <response code="400">Помилка валідації вхідних даних.</response>
+    /// <response code="401">Користувач неавторизований.</response>
+    /// <response code="403">Немає доступу до цієї послуги.</response>
+    /// <response code="404">Послугу не знайдено.</response>
+    [HttpPut("{id:guid}")]
     [SwaggerOperation(
-        Summary = "Оновити послугу (майстер)",
-        Description = "Оновлює існуючу послугу та повертає актуальні дані."
-    )]
+          Summary = "Оновити послугу (майстер)",
+          Description = "Оновлює існуючу послугу та повертає актуальні дані."
+      )]
 
     [SwaggerRequestExample(typeof(UpdateServiceRequest), typeof(UpdateServiceRequestExample))]
     [SwaggerResponse(200, "Successful update", typeof(Service))]
@@ -168,23 +168,23 @@ public sealed class ServicesController : ControllerBase
         return Ok(entity);
     }
 
-  /// <summary>
-  /// Видалити послугу (майстер)
-  /// </summary>
-  /// <remarks>
-  /// Потребує ролі <c>Master</c>. Видаляє послугу, якщо вона належить цьому майстру.
-  /// </remarks>
-  /// <param name="id">ID послуги</param>
-  /// <param name="ct"></param>
-  /// <response code="204">Послугу успішно видалено.</response>
-  /// <response code="401">Користувач неавторизований.</response>
-  /// <response code="403">Немає доступу до цієї послуги.</response>
-  /// <response code="404">Послугу не знайдено.</response>
-  [HttpDelete("{id:guid}")]
+    /// <summary>
+    /// Видалити послугу (майстер)
+    /// </summary>
+    /// <remarks>
+    /// Потребує ролі <c>Master</c>. Видаляє послугу, якщо вона належить цьому майстру.
+    /// </remarks>
+    /// <param name="id">ID послуги</param>
+    /// <param name="ct"></param>
+    /// <response code="204">Послугу успішно видалено.</response>
+    /// <response code="401">Користувач неавторизований.</response>
+    /// <response code="403">Немає доступу до цієї послуги.</response>
+    /// <response code="404">Послугу не знайдено.</response>
+    [HttpDelete("{id:guid}")]
     [SwaggerOperation(
-        Summary = "Видалити послугу (майстер)",
-        Description = "Видаляє існуючу послугу, якщо вона належить майстру."
-    )]
+          Summary = "Видалити послугу (майстер)",
+          Description = "Видаляє існуючу послугу, якщо вона належить майстру."
+      )]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]

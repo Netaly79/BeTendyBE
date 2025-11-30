@@ -233,13 +233,11 @@ public class BookingController : ControllerBase
             .AsNoTracking()
             .Where(b => b.StartUtc >= fromUtc && b.StartUtc < toUtc);
 
-        // фильтр по роли
         if (hasMaster)
             query = query.Where(b => b.MasterId == masterId);
         else
             query = query.Where(b => b.ClientId == clientId);
 
-        // опциональный фильтр по статусу
         if (status.HasValue)
         {
             query = query.Where(b => b.Status == status.Value);

@@ -49,7 +49,7 @@ public class AvailabilityControllerTests
         var slots = Assert.IsAssignableFrom<IEnumerable<SlotResponse>>(okResult.Value);
         var list = slots.ToList();
 
-        Assert.NotEmpty(list);              
+        Assert.NotEmpty(list);
         Assert.True(list.Zip(list.Skip(1), (a, b) => a.StartUtc <= b.StartUtc).All(x => x));
     }
 }

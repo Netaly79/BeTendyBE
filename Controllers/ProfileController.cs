@@ -220,7 +220,7 @@ public sealed class ProfileController : ControllerBase
       var m = body!.Master!;
       if (m.About is not null) master.About = string.IsNullOrWhiteSpace(m.About) ? null : m.About.Trim();
       if (m.Address is not null) master.Address = string.IsNullOrWhiteSpace(m.Address) ? null : m.Address.Trim();
-      if (m.City is not null) master.City =string.IsNullOrWhiteSpace(m.City) ? null : m.City.Trim();
+      if (m.City is not null) master.City = string.IsNullOrWhiteSpace(m.City) ? null : m.City.Trim();
       if (m.ExperienceYears is not null) master.ExperienceYears = m.ExperienceYears;
       if (m.Skills is not null) master.Skills = m.Skills;
       master.UpdatedAtUtc = DateTime.UtcNow;
@@ -309,5 +309,4 @@ public sealed class ProfileController : ControllerBase
 
     return Ok(new { avatarUrl });
   }
-
 }
