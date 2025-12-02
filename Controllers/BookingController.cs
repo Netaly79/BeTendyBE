@@ -182,7 +182,7 @@ public class BookingController : ControllerBase
     /// Якщо вказано — фільтрація тільки за цим статусом.
     ///
     /// Діапазон часу:
-    /// - Якщо <c>from_utc</c> і <c>to_utc</c> **не вказані** — використовується тиждень від поточного часу (UTC).
+    /// - Якщо <c>from_utc</c> і <c>to_utc</c> **не вказані** — повертаються усі бронювання.
     /// - Якщо вказані обидва — використовується заданий діапазон.
     /// - Якщо вказано лише один — <c>400 Bad Request</c>.
     /// </remarks>
@@ -214,12 +214,7 @@ public class BookingController : ControllerBase
         var hasFrom = fromUtc.HasValue;
         var hasTo = toUtc.HasValue;
 
-        if (!hasFrom && !hasTo)
-        {
-            fromUtc = nowUtc;
-            toUtc = nowUtc.AddDays(7);
-        }
-        else if (hasFrom != hasTo)
+        if (hasFrom != hasTo)
         {
             return BadRequest(new { message = "Both 'from_utc' and 'to_utc' must be specified together." });
         }
@@ -230,9 +225,13 @@ public class BookingController : ControllerBase
         }
 
         var query = db.Bookings
-            .AsNoTracking()
-            .Where(b => b.StartUtc >= fromUtc && b.StartUtc < toUtc);
+        .AsNoTracking()
+        .AsQueryable();
 
+        if (hasFrom && hasTo)
+        {
+            query = query.Where(b => b.StartUtc >= fromUtc && b.StartUtc < toUtc);
+        }
         if (hasMaster)
             query = query.Where(b => b.MasterId == masterId);
         else
