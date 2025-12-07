@@ -185,7 +185,7 @@ public sealed class AuthController : ControllerBase
     return Ok(new UserInfoResponse
     {
       Id = user.Id,
-      Email = user.Email,
+      //Email = user.Email,
       FirstName = user.FirstName,
       LastName = user.LastName,
       AvatarUrl = user.AvatarUrl ?? string.Empty,
