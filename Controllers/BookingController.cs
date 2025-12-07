@@ -230,7 +230,12 @@ public class BookingController : ControllerBase
 
         if (hasFrom && hasTo)
         {
-            query = query.Where(b => b.StartUtc >= fromUtc && b.StartUtc < toUtc);
+            var from = fromUtc!.Value;
+            var to = toUtc!.Value;
+
+            query = query.Where(b =>
+                b.EndUtc > from &&
+                b.StartUtc < to);
         }
         if (hasMaster)
         {
