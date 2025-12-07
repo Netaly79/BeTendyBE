@@ -4,7 +4,7 @@ namespace BeTendlyBE.Contracts;
 
 public record ProfileResponse(
     Guid Id,
-    //string Email,
+    string Email,
     string FirstName,
     string LastName,
     string Phone = "",
@@ -49,7 +49,7 @@ public static class ClientProfileMapping
     
         return new ProfileResponse(
             Id: u.Id,
-            //Email: u.Email,
+            Email: u.Email,
             FirstName: u.FirstName,
             LastName: u.LastName,
             Phone: u.Phone ?? "",

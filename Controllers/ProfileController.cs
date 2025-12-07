@@ -53,7 +53,7 @@ public sealed class ProfileController : ControllerBase
     {
       Dto = new ProfileResponse(
             u.Id,
-            //(u.Email ?? string.Empty).Trim(),
+            (u.Email ?? string.Empty).Trim(),
             (u.FirstName ?? string.Empty).Trim(),
             (u.LastName ?? string.Empty).Trim(),
             (u.Phone ?? string.Empty).Trim(),
@@ -157,7 +157,7 @@ public sealed class ProfileController : ControllerBase
             .Where(u => u.Id == userId)
             .Select(u => new ProfileResponse(
                 u.Id,
-                // (u.Email ?? string.Empty).Trim(),
+                (u.Email ?? string.Empty).Trim(),
                 (u.FirstName ?? string.Empty).Trim(),
                 (u.LastName ?? string.Empty).Trim(),
                 (u.Phone ?? string.Empty).Trim(),
