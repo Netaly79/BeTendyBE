@@ -101,7 +101,7 @@ public class AvailabilityController : ControllerBase
 
       if (!overlaps)
       {
-        var isPast = slotEnd <= nowUtc;
+        var isPast = slotStart <= nowUtc;
         freeSlots.Add(new SlotResponse(slotStart, slotEnd, isPast));
       }
 
