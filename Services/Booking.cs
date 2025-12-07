@@ -38,12 +38,21 @@ public class BookingService : IBookingService
     if (existing is not null)
       return existing;
 
+    var master = await _db.Masters
+        .AsNoTracking()
+        .FirstOrDefaultAsync(m => m.UserId == req.MasterId, ct);
+
+    if (master is null)
+        throw new InvalidOperationException("Master not found for given user.");
+
+    var masterId = master.Id;
+
     var service = await _db.Set<Service>()
         .AsNoTracking()
         .FirstOrDefaultAsync(s => s.Id == req.ServiceId, ct)
         ?? throw new InvalidOperationException("Service not found.");
 
-    if (service.MasterId != req.MasterId)
+    if (service.MasterId != masterId)
       throw new InvalidOperationException("Service does not belong to the specified master.");
 
     if (service.DurationMinutes <= 0)
@@ -66,7 +75,7 @@ public class BookingService : IBookingService
     var nowUtc = DateTime.UtcNow;
 
     var overlaps = await _db.Bookings.AnyAsync(b =>
-        b.MasterId == req.MasterId &&
+        b.MasterId == masterId &&
         (b.Status == BookingStatus.Pending || b.Status == BookingStatus.Confirmed) &&
         (b.HoldExpiresUtc == null || b.HoldExpiresUtc > nowUtc) &&
         !(endUtc <= b.StartUtc || startUtc >= b.EndUtc), ct);
@@ -77,7 +86,7 @@ public class BookingService : IBookingService
     var entity = new Booking
     {
       Id = Guid.NewGuid(),
-      MasterId = req.MasterId,
+      MasterId = masterId,
       ClientId = req.ClientId,
       ServiceId = req.ServiceId,
       Status = BookingStatus.Pending,
