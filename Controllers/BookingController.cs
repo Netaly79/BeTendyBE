@@ -233,7 +233,17 @@ public class BookingController : ControllerBase
             query = query.Where(b => b.StartUtc >= fromUtc && b.StartUtc < toUtc);
         }
         if (hasMaster)
+        {
+            var master = await db.Masters
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.UserId == masterId, ct);
+
+        if (master is null)
+            throw new InvalidOperationException("Master not found for given user.");
+
+        masterId = master.Id;
             query = query.Where(b => b.MasterId == masterId);
+        }
         else
             query = query.Where(b => b.ClientId == clientId);
 
