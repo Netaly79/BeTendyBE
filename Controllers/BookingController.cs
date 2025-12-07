@@ -254,8 +254,10 @@ public class BookingController : ControllerBase
 
         if (status.HasValue)
         {
-            query = query.Where(b => b.Status == status.Value);
+            query = query.Where(b => b.Status == status.Value );
         }
+
+        query = query.Where(b => b.Status != BookingStatus.Cancelled );
 
         var items = await query
             .OrderBy(b => b.StartUtc)

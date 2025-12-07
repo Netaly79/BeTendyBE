@@ -76,9 +76,19 @@ public class AvailabilityController : ControllerBase
 
     var nowUtc = DateTime.UtcNow;
 
+    var master = await db.Masters
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.UserId == masterId, ct);
+
+    if (master is null)
+      throw new InvalidOperationException("Master not found for given user.");
+
+    masterId = master.Id;
+
+
     var busyBookings = await db.Bookings
         .AsNoTracking()
-        .Where(b => b.MasterId == masterId.Value
+        .Where(b => b.MasterId == masterId
                     && (b.Status == BookingStatus.Pending || b.Status == BookingStatus.Confirmed)
                     && (b.HoldExpiresUtc == null || b.HoldExpiresUtc > nowUtc)
                     && !(b.EndUtc <= dayStartUtc || b.StartUtc >= dayEndUtc))
