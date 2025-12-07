@@ -69,7 +69,7 @@ public class AvailabilityController : ControllerBase
     var day = DateOnly.FromDateTime(localKyiv);
 
     var localStart = day.ToDateTime(new TimeOnly(9, 0), DateTimeKind.Unspecified);
-    var localEnd = day.ToDateTime(new TimeOnly(17, 0), DateTimeKind.Unspecified);
+    var localEnd = day.ToDateTime(new TimeOnly(19, 0), DateTimeKind.Unspecified);
 
     var dayStartUtc = TimeZoneInfo.ConvertTimeToUtc(localStart, kyiv);
     var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(localEnd, kyiv);
