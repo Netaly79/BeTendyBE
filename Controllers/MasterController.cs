@@ -120,6 +120,8 @@ public class MasterController : ControllerBase
             mastersQ = mastersQ.Where(m => m.City != null &&
                                            EF.Functions.ILike(m.City, $"%{query.City}%"));
         }
+        mastersQ = mastersQ
+            .OrderByDescending(m => m.CreatedAtUtc);
 
         var total = await mastersQ.CountAsync();
 
